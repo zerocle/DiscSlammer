@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YetAnotherDiscSlammer", "YetAnotherDiscSlammer\YetAnotherDiscSlammer\YetAnotherDiscSlammer.csproj", "{BA3CE28A-D696-452C-9690-79B413A3DD7A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Content", "Content\Content.contentproj", "{A36C2D2D-7E1C-421C-8A60-88E5EC28995C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BA3CE28A-D696-452C-9690-79B413A3DD7A}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{BA3CE28A-D696-452C-9690-79B413A3DD7A}.Debug|x86.ActiveCfg = Debug|x86
+		{BA3CE28A-D696-452C-9690-79B413A3DD7A}.Debug|x86.Build.0 = Debug|x86
+		{BA3CE28A-D696-452C-9690-79B413A3DD7A}.Release|Any CPU.ActiveCfg = Release|x86
+		{BA3CE28A-D696-452C-9690-79B413A3DD7A}.Release|x86.ActiveCfg = Release|x86
+		{BA3CE28A-D696-452C-9690-79B413A3DD7A}.Release|x86.Build.0 = Release|x86
+		{A36C2D2D-7E1C-421C-8A60-88E5EC28995C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A36C2D2D-7E1C-421C-8A60-88E5EC28995C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A36C2D2D-7E1C-421C-8A60-88E5EC28995C}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{A36C2D2D-7E1C-421C-8A60-88E5EC28995C}.Release|x86.ActiveCfg = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
