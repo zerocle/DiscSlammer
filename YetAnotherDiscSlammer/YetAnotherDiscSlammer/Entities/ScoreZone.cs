@@ -16,6 +16,8 @@ namespace YetAnotherDiscSlammer.Entities
       protected Court _court;
       protected Vector2 _Size;
       protected Rectangle _BoundingRectangle;
+      protected PlayerIndex _PlayerIndex;
+      public int Score { get; set; }
       public override Rectangle BoundingRectangle
       {
          get
@@ -24,13 +26,26 @@ namespace YetAnotherDiscSlammer.Entities
          }
       }
 
-      public ScoreZone(Court court, Vector2 Position, Vector2 Size)
+      public ScoreZone(Court court, Vector2 Position, Vector2 Size, PlayerIndex index)
          :base(Position, "ScoreZone")
       {
          this._court = court;
          this._Size = Size;
+         this._PlayerIndex = index;
          this._BoundingRectangle = new Rectangle((int)Position.X, (int)Position.Y, (int)_Size.X, (int)_Size.Y);
          Outline.Colori = Color.Red;
+      }
+
+      public void AddScore()
+      {
+         this.Score++;
+         _court.ResetDisc(_PlayerIndex);
+      }
+
+      public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+      {
+         this.DrawString(spriteBatch, Score.ToString());
+         base.Draw(gameTime, spriteBatch);
       }
    }
 }

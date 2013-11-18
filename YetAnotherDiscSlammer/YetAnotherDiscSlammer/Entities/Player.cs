@@ -182,6 +182,7 @@ namespace YetAnotherDiscSlammer.Entities
       }
 
       Vector2 movementStickDirection;
+      GamePadState _LastGameState;
       private void GetInput(GamePadState gamePadState, GameTime gameTime)
       {
          if (MovementStickLeft)
@@ -206,7 +207,7 @@ namespace YetAnotherDiscSlammer.Entities
                angle = (float)Math.Atan2(direction.Y, direction.X) + MathHelper.ToRadians(90);
             }
 
-            if (gamePadState.IsButtonDown(DiveButton))
+            if ((_LastGameState != null && _LastGameState.IsButtonUp(DiveButton)) && gamePadState.IsButtonDown(DiveButton))
             {
                //Throw disc
                _HadDisc = true;
@@ -247,6 +248,7 @@ namespace YetAnotherDiscSlammer.Entities
                }
             }
          }
+         _LastGameState = gamePadState;
       }
 
       private void ApplyPhysics(GameTime gameTime)
@@ -286,8 +288,8 @@ namespace YetAnotherDiscSlammer.Entities
 
          // Here we check bounds, to make sure we haven't left
          // the play area
-         if (BoundingRectangle.X + BoundingRectangle.Width > PlayArea.X + PlayArea.Width ||
-            BoundingRectangle.X < PlayArea.X)
+         if (position.X > PlayArea.X + PlayArea.Width ||
+            position.X < PlayArea.X)
          {
             position.X = previousPosition.X;
             velocity.X = 0;
@@ -295,8 +297,8 @@ namespace YetAnotherDiscSlammer.Entities
 
          // Here we check bounds, to make sure we haven't left
          // the play area
-         if (BoundingRectangle.Y + BoundingRectangle.Height > PlayArea.Y + PlayArea.Height ||
-            BoundingRectangle.Y < PlayArea.Y)
+         if (position.Y > PlayArea.Y + PlayArea.Height ||
+            position.Y < PlayArea.Y)
          {
             position.Y = previousPosition.Y;
             velocity.Y = 0;
@@ -318,7 +320,7 @@ namespace YetAnotherDiscSlammer.Entities
 
       protected void HandleCollisions()
       {
-         if (Court.DoesCollideWithDisc(this))
+         if (Court.CollidesWith(this, "Disc"))
          {
             if (_HadDisc)
             {

@@ -50,15 +50,25 @@ namespace YetAnotherDiscSlammer.Entities
          overlay.LoadContent(Court.Content.ServiceProvider);
       }
 
-      public void Update(GameTime gameTime)
+      public override void Update(GameTime gameTime)
       {
          sprite.PlayAnimation(DiscSpinning);
          Vector2 previousPosition = this.Position;
          this.Position += this._Movement;
-         if (Court.CollidesWithWall(this))
+         if (Court.CollidesWith(this, "Wall"))
          {
             this._Movement.Y = this._Movement.Y * -1;
             this.Position = previousPosition += this._Movement;
+         }
+         if (Court.CollidesWith(this, "ScoreZone"))
+         {
+            Entity[] zones = Court.GetCollisionEntities(this, "ScoreZone");
+            foreach (Entity zone in zones)
+            {
+               ScoreZone sz = zone as ScoreZone;
+               sz.AddScore();
+               
+            }
          }
       }
 
