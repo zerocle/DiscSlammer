@@ -10,7 +10,7 @@ using YetAnotherDiscSlammer.Common;
 
 namespace YetAnotherDiscSlammer.Entities
 {
-   public class Disc
+   public class Disc : Entity
    {
       #region Debug
       RectangleOverlay overlay;
@@ -20,26 +20,25 @@ namespace YetAnotherDiscSlammer.Entities
       public Court Court {get; protected set; }
       public Boolean IsScored { get; protected set; }
 
-      public Vector2 Position { get; set; }
       public Vector2 Velocity { get; protected set; }
       protected Vector2 _Movement;
       protected const float MaxSpeed = 10.0f;
 
       protected float boundingRadius = 16.0f;
-      public Rectangle BoundingRectangle
+      public override Rectangle  BoundingRectangle
       {
-         get
-         {
+	      get 
+	      { 
             int left = (int)Math.Round(Position.X - boundingRadius);
             int top = (int)Math.Round(Position.Y - boundingRadius);
             int width = (int)Math.Round(boundingRadius * 2);
             return new Rectangle(left, top, width, width);
-         }
+	      }
       }
 
       public Disc(Court court)
+         :base(Vector2.Zero, "Disc")
       {
-         this.Position = new Vector2(60, 60);
          this.Court = court;
          LoadContent();
       }
@@ -63,7 +62,7 @@ namespace YetAnotherDiscSlammer.Entities
          }
       }
 
-      public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+      public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
       {
          overlay.Draw(gameTime, spriteBatch, BoundingRectangle);
          sprite.Draw(gameTime, spriteBatch, Position, 0);
@@ -74,6 +73,11 @@ namespace YetAnotherDiscSlammer.Entities
          float x = (float)Math.Sin(angle);
          float y = -1 * (float)Math.Cos(angle);
          this._Movement = new Vector2(x, y) * MaxSpeed ;
+      }
+
+      public void SetPosition(Vector2 position)
+      {
+         this.Position = position;
       }
    }
 }

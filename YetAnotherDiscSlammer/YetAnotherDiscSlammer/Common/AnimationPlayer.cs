@@ -14,7 +14,6 @@ namespace YetAnotherDiscSlammer.Common
    /// </summary>
    struct AnimationPlayer
    {
-      public SpriteFont DebugFont;
       /// <summary>
       /// Gets the animation which is currently playing.
       /// </summary>
@@ -61,11 +60,6 @@ namespace YetAnotherDiscSlammer.Common
          this.time = 0.0f;
       }
 
-      public void SetDebugFont(SpriteFont font)
-      {
-         this.DebugFont = font;
-      }
-
       /// <summary>
       /// Advances the time position and draws the current frame of the animation.
       /// </summary>
@@ -95,11 +89,6 @@ namespace YetAnotherDiscSlammer.Common
          Rectangle source = new Rectangle(FrameIndex * Animation.Texture.Height, 0, Animation.Texture.Height, Animation.Texture.Height);
          // Draw the current frame.
          spriteBatch.Draw(Animation.Texture, position, source, Color.White, angle, Origin, 1.0f, SpriteEffects.None, 0.0f);
-         if (DebugFont != null)
-         {
-            spriteBatch.DrawString(DebugFont, "P: " + position.ToString(), position - new Vector2(0, -10), Color.White);
-            spriteBatch.DrawString(DebugFont, "A: " + angle.ToString(), position, Color.White);
-         }
       }
    }
 }

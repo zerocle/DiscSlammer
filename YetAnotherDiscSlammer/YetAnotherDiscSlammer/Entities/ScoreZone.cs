@@ -11,34 +11,26 @@ using YetAnotherDiscSlammer.Common;
 
 namespace YetAnotherDiscSlammer.Entities
 {
-   public class ScoreZone
+   public class ScoreZone : Entity
    {
-      #region Debug
-      protected RectangleOverlay Overlay { get; set; }
-      #endregion
-      protected Court _court; 
-      public Rectangle ZoneBounds { get; protected set; }
+      protected Court _court;
+      protected Vector2 _Size;
+      protected Rectangle _BoundingRectangle;
+      public override Rectangle BoundingRectangle
+      {
+         get
+         {
+            return _BoundingRectangle;
+         }
+      }
 
-      public ScoreZone(Court court, Rectangle zoneBounds)
+      public ScoreZone(Court court, Vector2 Position, Vector2 Size)
+         :base(Position, "ScoreZone")
       {
          this._court = court;
-         this.ZoneBounds = zoneBounds;
-         Overlay = new RectangleOverlay(Color.MediumVioletRed);
-      }
-
-      public void LoadContent()
-      {
-         Overlay.LoadContent(_court.Content.ServiceProvider);
-      }
-
-      public void Update(GameTime gameTime)
-      {
-         
-      }
-
-      public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
-      {
-         Overlay.Draw(gameTime, spriteBatch, ZoneBounds);
+         this._Size = Size;
+         this._BoundingRectangle = new Rectangle((int)Position.X, (int)Position.Y, (int)_Size.X, (int)_Size.Y);
+         Outline.Colori = Color.Red;
       }
    }
 }

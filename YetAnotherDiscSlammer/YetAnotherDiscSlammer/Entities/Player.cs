@@ -17,10 +17,9 @@ namespace YetAnotherDiscSlammer.Entities
       Ogre,
       Troll,
    }
-   public class Player
+   public class Player : Entity
    {
       #region Debug Stuff
-      private SpriteFont font;
       private RectangleOverlay BoundingOverlay;
       private RectangleOverlay PlayAreaOverlay;
       #endregion
@@ -36,7 +35,6 @@ namespace YetAnotherDiscSlammer.Entities
 
       public Rectangle PlayArea { get; protected set; }
       public Court Court { get; protected set; }
-      public Vector2 Position { get; protected set; }
       public Vector2 Velocity { get; protected set; }
 
 
@@ -48,7 +46,7 @@ namespace YetAnotherDiscSlammer.Entities
       private const float MaxDiveSpeed = 12050.0f;
       private const float GroundDragFactor = 0.48f;
       private const float MaxDiveTime = 0.15f; // in seconds
-      private const Buttons JumpButton = Buttons.A;
+      private Buttons DiveButton = Buttons.A;
       private Boolean MovementStickLeft = true;
 
       /// <summary>
@@ -71,7 +69,7 @@ namespace YetAnotherDiscSlammer.Entities
       /// <summary>
       /// Gets a rectangle which bounds this player in world space.
       /// </summary>
-      public Rectangle BoundingRectangle
+      public override Rectangle BoundingRectangle
       {
          get
          {
@@ -99,36 +97,46 @@ namespace YetAnotherDiscSlammer.Entities
 
 
       public Player(Court court, Vector2 position, Character character, PlayerIndex index, Rectangle PlayArea, float InitialDirection = 0.0f)
+         :base(position, "Player")
       {
          this.Index = index;
          this.character = character;
          this.Court = court;
          this.angle = MathHelper.ToRadians(InitialDirection) + MathHelper.ToRadians(90);
          this.PlayArea = PlayArea;
-         this.Position = position;
+
+         #region Debug stuff
          if (Index ==  PlayerIndex.One)
          {
-            // This is all just a debuggey thing to use the right thumbstick for player 1
+            // This is all just a debuggey thing to use the 
+            // right thumbstick for player 2
+            // If two controllers are being used, then this 
+            // isn't necessary
             this.MovementStickLeft = true;
+            this.DiveButton = Buttons.A;
          }
          else
          {
+            this.DiveButton = Buttons.B;
             this.MovementStickLeft = false;
          }
+         // We also hard code the player index so that 
+         // we can use one controller for testing.
          Index = PlayerIndex.One;
+         #endregion
       }
 
       /// <summary>
       /// Loads the player sprite sheet and sounds.
       /// </summary>
-      public void LoadContent()
+      public override void LoadContent(ContentManager content)
       {
+         base.LoadContent(content);
          String characterString = "/" + character.ToString();
-         idleAnimation = new Animation(Court.Content.Load<Texture2D>("Sprites" + characterString + "/Idle"), 0.1f, true);
-         moveAnimation = new Animation(Court.Content.Load<Texture2D>("Sprites" + characterString + "/move"), 0.1f, true);
-         diveAnimation = new Animation(Court.Content.Load<Texture2D>("Sprites" + characterString + "/move"), 0.1f, true);
-         font = Court.Content.Load<SpriteFont>("Font/Standard");
-         sprite.SetDebugFont(font);
+         idleAnimation = new Animation(content.Load<Texture2D>("Sprites" + characterString + "/Idle"), 0.1f, true);
+         moveAnimation = new Animation(content.Load<Texture2D>("Sprites" + characterString + "/move"), 0.1f, true);
+         diveAnimation = new Animation(content.Load<Texture2D>("Sprites" + characterString + "/move"), 0.1f, true);
+
          // Calculate bounds within texture size.            
          int width = (int)(idleAnimation.FrameWidth);
          int left = 0;
@@ -156,8 +164,9 @@ namespace YetAnotherDiscSlammer.Entities
       }
 
       #region Update
-      public void Update(GameTime gameTime)
+      public override void Update(GameTime gameTime)
       {
+         base.Update(gameTime);
          GetInput(GamePad.GetState(Index), gameTime);
 
          ApplyPhysics(gameTime);
@@ -197,7 +206,7 @@ namespace YetAnotherDiscSlammer.Entities
                angle = (float)Math.Atan2(direction.Y, direction.X) + MathHelper.ToRadians(90);
             }
 
-            if (gamePadState.IsButtonDown(JumpButton))
+            if (gamePadState.IsButtonDown(DiveButton))
             {
                //Throw disc
                _HadDisc = true;
@@ -206,7 +215,7 @@ namespace YetAnotherDiscSlammer.Entities
          }
          else
          {
-            if (gamePadState.IsButtonDown(JumpButton))
+            if (gamePadState.IsButtonDown(DiveButton))
             {
                if (diveTime < MaxDiveTime)
                {
@@ -277,8 +286,8 @@ namespace YetAnotherDiscSlammer.Entities
 
          // Here we check bounds, to make sure we haven't left
          // the play area
-         if (position.X > PlayArea.X + PlayArea.Width ||
-            position.X < PlayArea.X)
+         if (BoundingRectangle.X + BoundingRectangle.Width > PlayArea.X + PlayArea.Width ||
+            BoundingRectangle.X < PlayArea.X)
          {
             position.X = previousPosition.X;
             velocity.X = 0;
@@ -286,8 +295,8 @@ namespace YetAnotherDiscSlammer.Entities
 
          // Here we check bounds, to make sure we haven't left
          // the play area
-         if (position.Y > PlayArea.Y + PlayArea.Height ||
-            position.Y < PlayArea.Y)
+         if (BoundingRectangle.Y + BoundingRectangle.Height > PlayArea.Y + PlayArea.Height ||
+            BoundingRectangle.Y < PlayArea.Y)
          {
             position.Y = previousPosition.Y;
             velocity.Y = 0;
@@ -380,13 +389,16 @@ namespace YetAnotherDiscSlammer.Entities
       /// <summary>
       /// Draws the animated player.
       /// </summary>
-      public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+      public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
       {
+         base.Draw(gameTime, spriteBatch);
          PlayAreaOverlay.Draw(gameTime, spriteBatch, PlayArea);
          BoundingOverlay.Draw(gameTime, spriteBatch, BoundingRectangle);
-         spriteBatch.DrawString(font, movementStickDirection.ToString(), this.Position + new Vector2(10, -100), Color.Black);
          // Draw that sprite.
          sprite.Draw(gameTime, spriteBatch, Position, angle);
+         DrawString(spriteBatch, "P: " + Position.ToString());
+         DrawString(spriteBatch, "A: " + angle.ToString());
+         DrawString(spriteBatch, "JP: " + movementStickDirection.ToString());
       }
       #endregion
 

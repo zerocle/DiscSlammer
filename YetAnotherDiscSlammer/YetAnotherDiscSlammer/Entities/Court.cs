@@ -56,26 +56,30 @@ namespace YetAnotherDiscSlammer.Entities
          Players[1] = new Player(this, new Vector2(Settings.Instance.Width - 100, Settings.Instance.Height / 2), Character.Scorpion, PlayerIndex.Two, 
                                        new Rectangle(Settings.Instance.Width - 50 - boundsWidth, 50, boundsWidth, boundsHeight), 180.0f);
          Players[0].HasDisc = true;
-         ScoreZones[0] = new ScoreZone(this, new Rectangle(25, 50, 25, boundsHeight));
-         ScoreZones[1] = new ScoreZone(this, new Rectangle(Settings.Instance.Width - 50, 50, 25, boundsHeight));
+         ScoreZones[0] = new ScoreZone(this, new Vector2(25, 50), 
+                                             new Vector2(25, boundsHeight));
+         ScoreZones[1] = new ScoreZone(this, new Vector2(Settings.Instance.Width - 50, 50), 
+                                             new Vector2(25, boundsHeight));
 
-         Walls[0] = new Wall(this, new Rectangle(25, 40, Settings.Instance.Width - 50, 10));
-         Walls[1] = new Wall(this, new Rectangle(25, Settings.Instance.Height - 50, Settings.Instance.Width - 50, 10));
+         Walls[0] = new Wall(this, new Vector2(25, 40), 
+                                   new Vector2(Settings.Instance.Width - 50, 10));
+         Walls[1] = new Wall(this, new Vector2(25, Settings.Instance.Height - 50), 
+                                   new Vector2(Settings.Instance.Width - 50, 10));
       }
 
       public void LoadContent()
       {
          foreach (Player p in Players)
          {
-            p.LoadContent();
+            p.LoadContent(Content);
          }
          foreach (ScoreZone sz in ScoreZones)
          {
-            sz.LoadContent();
+            sz.LoadContent(Content);
          }
          foreach (Wall w in Walls)
          {
-            w.LoadContent();
+            w.LoadContent(Content);
          }
       }
       #endregion
@@ -98,7 +102,7 @@ namespace YetAnotherDiscSlammer.Entities
             {
                if (p.HasDisc)
                {
-                  GameDisc.Position = p.RightHandPosition;
+                  GameDisc.SetPosition(p.RightHandPosition);
                }
                p.Update(gameTime);
             }
@@ -140,7 +144,7 @@ namespace YetAnotherDiscSlammer.Entities
          Rectangle discBounds = disc.BoundingRectangle;
          foreach (Wall wall in Walls)
          {
-            if (wall.ZoneBounds.Intersects(discBounds))
+            if (wall.BoundingRectangle.Intersects(discBounds))
             {
                return true;
             }

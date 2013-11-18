@@ -113,6 +113,7 @@
     <Compile Include="Common\Settings.cs" />
     <Compile Include="Entities\Court.cs" />
     <Compile Include="Entities\Disc.cs" />
+    <Compile Include="Entities\Entity.cs" />
     <Compile Include="Entities\Player.cs" />
     <Compile Include="Entities\ScoreZone.cs" />
     <Compile Include="Entities\Wall.cs" />
