@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 using YetAnotherDiscSlammer.Common;
+using YetAnotherDiscSlammer.Helpers;
 
 namespace YetAnotherDiscSlammer.Entities
 {
@@ -167,10 +168,12 @@ namespace YetAnotherDiscSlammer.Entities
       public override void Update(GameTime gameTime)
       {
          base.Update(gameTime);
-         GetInput(GamePad.GetState(Index), gameTime);
 
-         ApplyPhysics(gameTime);
+         InputState inputState = GetInput(GamePad.GetState(Index), gameTime);
+         PhysicsState physicsState = CalculatePhysics(gameTime, inputState);
+         ApplyPhysics(gameTime, physicsState);
 
+         //Check to see if the animation should be the idle or moving
          if (Math.Abs(Velocity.Length()) - 0.02f > 0)
          {
             sprite.PlayAnimation(moveAnimation);
@@ -181,33 +184,45 @@ namespace YetAnotherDiscSlammer.Entities
          }
       }
 
-      Vector2 movementStickDirection;
       GamePadState _LastGameState;
-      private void GetInput(GamePadState gamePadState, GameTime gameTime)
+      private InputState GetInput(GamePadState gamePadState, GameTime gameTime)
       {
+         InputState state = new InputState();
          if (MovementStickLeft)
          {
-            movementStickDirection = gamePadState.ThumbSticks.Left;
+            state.MovementStickDirection = gamePadState.ThumbSticks.Left * MoveStickScale;
          }
          else
          {
-            movementStickDirection = gamePadState.ThumbSticks.Right;
+            state.MovementStickDirection = gamePadState.ThumbSticks.Right * MoveStickScale;
          }
+
+         state.MovementStickDirection.Y *= -1;
+
+         state.IsDiveButtonDown = gamePadState.IsButtonDown(DiveButton);
+         state.WasDiveButtonDown = _LastGameState.IsButtonDown(DiveButton);
+
+         _LastGameState = gamePadState;
+
+         return state;
+         
+      }
+      private PhysicsState CalculatePhysics(GameTime gameTime, InputState inputState)
+      {
+         float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
+         PhysicsState state = new PhysicsState();
+         state.Position = Position;
          if (this.HasDisc)
          {
-            movement = Vector2.Zero;
+            // While the player has the disc, we don't want them moving
+            state.Movement = Vector2.Zero;
+            state.Velocity = Vector2.Zero;
+            // but they can still turn
+            state.Angle = GetAngleFromVector(inputState.MovementStickDirection);
 
-            Vector2 direction = movementStickDirection * MoveStickScale;// Ignore small movements to prevent running in place.
-            if (Math.Abs(direction.X) < 0.25f && Math.Abs(direction.Y) < 0.25f)
-            {
-            }
-            else
-            {
-               direction.Y *= -1;
-               angle = (float)Math.Atan2(direction.Y, direction.X) + MathHelper.ToRadians(90);
-            }
-
-            if ((_LastGameState != null && _LastGameState.IsButtonUp(DiveButton)) && gamePadState.IsButtonDown(DiveButton))
+            // we make sure the last state was up, so that the player doesn't throw 
+            // as soon as they catch it diving.
+            if (!inputState.WasDiveButtonDown && inputState.IsDiveButtonDown)
             {
                //Throw disc
                _HadDisc = true;
@@ -216,12 +231,17 @@ namespace YetAnotherDiscSlammer.Entities
          }
          else
          {
-            if (gamePadState.IsButtonDown(DiveButton))
+            // If the user is pressing the dive button and doesnt
+            // have the disc
+            if (inputState.IsDiveButtonDown)
             {
+               // and they still haven't dove past the max
+               // amount of time
                if (diveTime < MaxDiveTime)
                {
                   diveTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                   IsDiving = true;
+                  state.Movement = inputState.MovementStickDirection;
                }
                else
                {
@@ -230,94 +250,105 @@ namespace YetAnotherDiscSlammer.Entities
             }
             else
             {
+               // set the diving state if the button isn't down
                diveTime = 0.0f;
                IsDiving = false;
 
-               movement = movementStickDirection * MoveStickScale;
+               Vector2 tempMovement = inputState.MovementStickDirection;
 
                // Ignore small movements to prevent running in place.
-               if (Math.Abs(movement.X) < 0.25f && Math.Abs(movement.Y) < 0.25f)
+               if (Math.Abs(tempMovement.X) < 0.25f && Math.Abs(tempMovement.Y) < 0.25f)
                {
-                  movement = Vector2.Zero;
+                  tempMovement = Vector2.Zero;
                }
                else
                {
-                  movement.Y *= -1;
-
-                  angle = (float)Math.Atan2(movement.Y, movement.X) + MathHelper.ToRadians(90);
+                  angle = GetAngleFromVector(tempMovement);
                }
+               state.Movement = tempMovement;
             }
-         }
-         _LastGameState = gamePadState;
-      }
+            Vector2 calculatedVelocity = Vector2.Zero;
 
-      private void ApplyPhysics(GameTime gameTime)
+            // Apply our physics to determine our new position
+            if (IsDiving)
+            {
+               calculatedVelocity = Velocity + state.Movement * DiveAcceleration * elapsed;
+
+               // Prevent the player from diving faster than his top speed.            
+               calculatedVelocity.X = MathHelper.Clamp(calculatedVelocity.X, -MaxDiveSpeed, MaxDiveSpeed);
+
+               // Prevent the player from diving faster than his top speed.            
+               calculatedVelocity.Y = MathHelper.Clamp(calculatedVelocity.Y, -MaxDiveSpeed, MaxDiveSpeed);
+            }
+            else
+            {
+               calculatedVelocity = Velocity + state.Movement * MoveAcceleration * elapsed;
+
+               // Prevent the player from running faster than his top speed.            
+               calculatedVelocity.X = MathHelper.Clamp(calculatedVelocity.X, -MaxMoveSpeed, MaxMoveSpeed);
+
+               // Prevent the player from running faster than his top speed.            
+               calculatedVelocity.Y = MathHelper.Clamp(calculatedVelocity.Y, -MaxMoveSpeed, MaxMoveSpeed);
+            }
+
+            // Add friction into the calculations
+            calculatedVelocity *= GroundDragFactor;
+
+            state.Velocity = calculatedVelocity;
+         }
+         return state;
+      }
+      private void ApplyPhysics(GameTime gameTime, PhysicsState physicsState)
       {
          float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-         Vector2 previousPosition = Position;
-         Vector2 velocity = Velocity;
-         if (IsDiving)
-         {
-            velocity += movement * DiveAcceleration * elapsed;
+         Vector2 previousPosition = physicsState.Position;
+         float oldAngle = physicsState.Angle ;
 
-            // Prevent the player from running faster than his top speed.            
-            velocity.X = MathHelper.Clamp(velocity.X, -MaxDiveSpeed, MaxDiveSpeed);
+         // calculate our position after we move
+         physicsState.NextPosition = Position + physicsState.Velocity * elapsed;
 
-            // Prevent the player from running faster than his top speed.            
-            velocity.Y = MathHelper.Clamp(velocity.Y, -MaxDiveSpeed, MaxDiveSpeed);
-         }
-         else
-         {
-            velocity += movement * MoveAcceleration * elapsed;
-
-            // Prevent the player from running faster than his top speed.            
-            velocity.X = MathHelper.Clamp(velocity.X, -MaxMoveSpeed, MaxMoveSpeed);
-
-            // Prevent the player from running faster than his top speed.            
-            velocity.Y = MathHelper.Clamp(velocity.Y, -MaxMoveSpeed, MaxMoveSpeed);
-         }
-         velocity *= GroundDragFactor;
-
-
-         Vector2 position = Position + velocity * elapsed;
-         float newX = (float)Math.Round(position.X);
-         float newY = (float)Math.Round(position.Y);
-
+         // Check for collisions
          HandleCollisions();
 
-         // Here we check bounds, to make sure we haven't left
-         // the play area
-         if (position.X > PlayArea.X + PlayArea.Width ||
-            position.X < PlayArea.X)
-         {
-            position.X = previousPosition.X;
-            velocity.X = 0;
-         }
+         // Make sure our new position is within the play area.
+         CheckPlayArea(physicsState);
 
-         // Here we check bounds, to make sure we haven't left
-         // the play area
-         if (position.Y > PlayArea.Y + PlayArea.Height ||
-            position.Y < PlayArea.Y)
-         {
-            position.Y = previousPosition.Y;
-            velocity.Y = 0;
-         }
-
-         this.Position = position;
+         // Now we want to set our actual position
+         this.Position = physicsState.NextPosition;
 
          // If the collision stopped us from moving or the new 
          // position is neglegably small, reset the velocity to zero.
-         if (Position.X == previousPosition.X)
-            velocity.X = 0;
+         if (physicsState.NextPosition.X == physicsState.Position.X)
+            physicsState.Velocity.X = 0;
 
-         if (Position.Y == previousPosition.Y)
-            velocity.Y = 0;
+         if (physicsState.NextPosition.Y == physicsState.Position.Y)
+            physicsState.Velocity.Y = 0;
 
-
-         this.Velocity = velocity;
+         this.Velocity = physicsState.Velocity;
       }
 
+      protected void CheckPlayArea(PhysicsState state)
+      {
+
+         // Here we check bounds, to make sure we haven't left
+         // the play area
+         if (state.NextPosition.X > PlayArea.X + PlayArea.Width ||
+            state.NextPosition.X < PlayArea.X)
+         {
+            state.NextPosition.X = state.Position.X;
+            state.Velocity.X = 0;
+         }
+
+         // Here we check bounds, to make sure we haven't left
+         // the play area
+         if (state.NextPosition.Y > PlayArea.Y + PlayArea.Height ||
+            state.NextPosition.Y < PlayArea.Y)
+         {
+            state.NextPosition.Y = state.Position.Y;
+            state.Velocity.Y = 0;
+         }
+      }
       protected void HandleCollisions()
       {
          if (Court.CollidesWith(this, "Disc"))
@@ -400,11 +431,21 @@ namespace YetAnotherDiscSlammer.Entities
          sprite.Draw(gameTime, spriteBatch, Position, angle);
          DrawString(spriteBatch, "P: " + Position.ToString());
          DrawString(spriteBatch, "A: " + angle.ToString());
-         DrawString(spriteBatch, "JP: " + movementStickDirection.ToString());
+         //DrawString(spriteBatch, "JP: " + movementStickDirection.ToString());
       }
       #endregion
 
       #region Helpers
+      private float GetAngleFromVector(Vector2 coordinate)
+      {
+         float tempAngle = 0.0f;
+         Vector2 direction = coordinate;// Ignore small movements to prevent running in place.
+         if (Math.Abs(direction.X) > 0.25f || Math.Abs(direction.Y) > 0.25f)
+         {
+            tempAngle = (float)Math.Atan2(direction.Y, direction.X) + MathHelper.ToRadians(90);
+         }
+         return tempAngle;
+      }
       #endregion
    }
 }
