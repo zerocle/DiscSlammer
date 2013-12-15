@@ -25,20 +25,8 @@ namespace YetAnotherDiscSlammer.Entities
       private RectangleOverlay PlayAreaOverlay;
       #endregion
 
-      private Animation idleAnimation;
-      private Animation moveAnimation;
-      private Animation diveAnimation;
-      private Character character = Character.Ogre;
-
-      private AnimationPlayer sprite;
-      public Boolean HasDisc { get; set; }
-      protected Boolean _HadDisc = false;
-
-      public Rectangle PlayArea { get; protected set; }
-      public Court Court { get; protected set; }
-      public Vector2 Velocity { get; protected set; }
-
-
+      #region Properties
+      #region Constants
       // Input configuration
       private const float MoveStickScale = 1.0f;
       private const float MoveAcceleration = 13000.0f;
@@ -47,18 +35,39 @@ namespace YetAnotherDiscSlammer.Entities
       private const float MaxDiveSpeed = 12050.0f;
       private const float GroundDragFactor = 0.48f;
       private const float MaxDiveTime = 0.15f; // in seconds
+      #endregion
+      #region Animation
+      private Animation idleAnimation;
+      private Animation moveAnimation;
+      private Animation diveAnimation;
+      private AnimationPlayer sprite;
+      #endregion
+      private Character character = Character.Ogre;
+
+      public Boolean HasDisc { get; set; }
+      protected Boolean _HadDisc = false;
+
+      protected Boolean _IsOnAutoPilot = false;
+      protected Vector2 _AutoPilotDestination = Vector2.Zero;
+      protected Vector2 _StartPosition = Vector2.Zero;
+
+      public Rectangle PlayArea { get; protected set; }
+      public Court Court { get; protected set; }
+
+
       private Buttons DiveButton = Buttons.A;
       private Boolean MovementStickLeft = true;
+      protected PlayerIndex ControllerIndex { get; protected set; }
+      /// <summary>
+      /// Current user movement input.
+      /// </summary>
+      private Vector2 movement;
 
       /// <summary>
       /// Gets whether or not the player's diving
       /// </summary>
       public bool IsDiving { get; protected set; }
-
-      /// <summary>
-      /// Current user movement input.
-      /// </summary>
-      private Vector2 movement;
+      public Vector2 Velocity { get; protected set; }
 
       // Jumping state
       private float diveTime;
@@ -94,20 +103,21 @@ namespace YetAnotherDiscSlammer.Entities
          }
       }
 
-      public PlayerIndex Index { get; protected set; }
-
+      #endregion
 
       public Player(Court court, Vector2 position, Character character, PlayerIndex index, Rectangle PlayArea, float InitialDirection = 0.0f)
          :base(position, "Player")
       {
-         this.Index = index;
+         this.ControllerIndex = index;
          this.character = character;
          this.Court = court;
          this.angle = MathHelper.ToRadians(InitialDirection) + MathHelper.ToRadians(90);
          this.PlayArea = PlayArea;
+         this._StartPosition = position;
+         this._IsOnAutoPilot = false;
 
          #region Debug stuff
-         if (Index ==  PlayerIndex.One)
+         if (ControllerIndex == PlayerIndex.One)
          {
             // This is all just a debuggey thing to use the 
             // right thumbstick for player 2
@@ -123,7 +133,7 @@ namespace YetAnotherDiscSlammer.Entities
          }
          // We also hard code the player index so that 
          // we can use one controller for testing.
-         Index = PlayerIndex.One;
+         ControllerIndex = PlayerIndex.One;
          #endregion
       }
 
@@ -149,7 +159,7 @@ namespace YetAnotherDiscSlammer.Entities
          BoundingOverlay.LoadContent(Court.Content.ServiceProvider);
          PlayAreaOverlay = new RectangleOverlay(Color.Orange);
          PlayAreaOverlay.LoadContent(Court.Content.ServiceProvider);
-         Reset(Position);
+         sprite.PlayAnimation(idleAnimation);
       }
 
       /// <summary>
@@ -158,6 +168,8 @@ namespace YetAnotherDiscSlammer.Entities
       /// <param name="position">The position to come to life at.</param>
       public void Reset(Vector2 position)
       {
+         this._IsOnAutoPilot = true;
+         this._AutoPilotDestination = _StartPosition;
          Position = position;
          Velocity = Vector2.Zero;
          IsDiving = false;
@@ -168,10 +180,40 @@ namespace YetAnotherDiscSlammer.Entities
       public override void Update(GameTime gameTime)
       {
          base.Update(gameTime);
+         InputState inputState = new InputState();
+         // This is some debug stuff to force the return to the start position.
+         if (GamePad.GetState(ControllerIndex).IsButtonDown(Buttons.Y) || Keyboard.GetState().IsKeyDown(Keys.R)) 
+         {
+            _IsOnAutoPilot = true;
+            _AutoPilotDestination = _StartPosition;
+         }
 
-         InputState inputState = GetInput(GamePad.GetState(Index), gameTime);
+         // When we're on autopilot we want to handle movement instead of the controller.
+         if (_IsOnAutoPilot)
+         {
+            inputState.IsDiveButtonDown = false;
+            inputState.WasDiveButtonDown = false;
+            inputState.MovementStickDirection = _AutoPilotDestination - Position ;
+
+         }
+         else
+         {
+            inputState = GetInput(GamePad.GetState(ControllerIndex), gameTime);
+         }
          PhysicsState physicsState = CalculatePhysics(gameTime, inputState);
          ApplyPhysics(gameTime, physicsState);
+
+         if (_IsOnAutoPilot)
+         {
+            if(Position.X + 1 > _AutoPilotDestination.X &&
+               Position.X - 1 < _AutoPilotDestination.X &&
+               Position.Y + 1 > _AutoPilotDestination.Y &&
+               Position.Y -1 < _AutoPilotDestination.Y)
+            {
+               Position = _AutoPilotDestination;
+               _IsOnAutoPilot = false;
+            }
+         }
 
          //Check to see if the animation should be the idle or moving
          if (Math.Abs(Velocity.Length()) - 0.02f > 0)
