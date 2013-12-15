@@ -57,11 +57,7 @@ namespace YetAnotherDiscSlammer.Entities
 
       private Buttons DiveButton = Buttons.A;
       private Boolean MovementStickLeft = true;
-      protected PlayerIndex ControllerIndex { get; protected set; }
-      /// <summary>
-      /// Current user movement input.
-      /// </summary>
-      private Vector2 movement;
+      protected PlayerIndex ControllerIndex { get; set; }
 
       /// <summary>
       /// Gets whether or not the player's diving
@@ -75,7 +71,6 @@ namespace YetAnotherDiscSlammer.Entities
       private float angle = 0.0f;
 
       //Collision stuff
-      private Rectangle localBounds;
       /// <summary>
       /// Gets a rectangle which bounds this player in world space.
       /// </summary>
@@ -148,13 +143,6 @@ namespace YetAnotherDiscSlammer.Entities
          moveAnimation = new Animation(content.Load<Texture2D>("Sprites" + characterString + "/move"), 0.1f, true);
          diveAnimation = new Animation(content.Load<Texture2D>("Sprites" + characterString + "/move"), 0.1f, true);
 
-         // Calculate bounds within texture size.            
-         int width = (int)(idleAnimation.FrameWidth);
-         int left = 0;
-         int height = (int)(idleAnimation.FrameWidth);
-         int top = 0;
-
-         localBounds = new Rectangle(left, top, width, height);
          BoundingOverlay = new RectangleOverlay(Color.Red);
          BoundingOverlay.LoadContent(Court.Content.ServiceProvider);
          PlayAreaOverlay = new RectangleOverlay(Color.Orange);

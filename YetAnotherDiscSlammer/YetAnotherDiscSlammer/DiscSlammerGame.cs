@@ -11,6 +11,7 @@ using Microsoft.Xna.Framework.Media;
 
 using YetAnotherDiscSlammer.Common;
 using YetAnotherDiscSlammer.Entities;
+using YetAnotherDiscSlammer.Menu;
 
 namespace YetAnotherDiscSlammer
 {
@@ -22,11 +23,13 @@ namespace YetAnotherDiscSlammer
       GraphicsDeviceManager graphics;
       SpriteBatch spriteBatch;
       Court court;
+      MenuBase mainMenu;
 
       public DiscSlammerGame()
       {
          graphics = new GraphicsDeviceManager(this);
          Content.RootDirectory = "Content";
+         mainMenu = new MenuBase();
       }
 
       /// <summary>
@@ -39,8 +42,32 @@ namespace YetAnotherDiscSlammer
       {
          // TODO: Add your initialization logic here
          Settings.Instance.Initialize(GraphicsDevice.Viewport.Height, GraphicsDevice.Viewport.Width);
-
+         MenuItem StartGame = new MenuItem();
+         MenuItem Options = new MenuItem();
+         MenuItem QuitGame = new MenuItem();
+         StartGame.Initialize("Start Game", new Action(StartGameMethod));
+         QuitGame.Initialize("Quit Game", new Action(ExitGameMethod));
+         Options.Initialize("Options", new Action(ShowOptions));
+         List<MenuItem> menuItems = new List<MenuItem>();
+         menuItems.Add(StartGame);
+         menuItems.Add(Options);
+         menuItems.Add(QuitGame);
+         mainMenu.Initialize(menuItems);
          base.Initialize();
+      }
+
+      protected void ShowOptions()
+      {
+
+      }
+
+      protected void StartGameMethod()
+      {
+
+      }
+      protected void ExitGameMethod()
+      {
+         this.Exit();
       }
 
       /// <summary>
@@ -53,7 +80,7 @@ namespace YetAnotherDiscSlammer
          spriteBatch = new SpriteBatch(GraphicsDevice);
          Services.AddService(typeof(GraphicsDevice), GraphicsDevice);
          court = new Court(Services);
-
+         mainMenu.LoadContent( new ContentManager(Services, "Content"));
          // TODO: use this.Content to load your game content here
       }
 
@@ -79,8 +106,8 @@ namespace YetAnotherDiscSlammer
          {
             this.Exit();
          }
-
-         court.Update(gameTime);
+         mainMenu.Update(gameTime);
+         //court.Update(gameTime);
          base.Update(gameTime);
       }
 
@@ -92,7 +119,8 @@ namespace YetAnotherDiscSlammer
       {
          GraphicsDevice.Clear(Color.CornflowerBlue);
          spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
-         court.Draw(gameTime, spriteBatch);
+         //court.Draw(gameTime, spriteBatch);
+         mainMenu.Draw(gameTime, spriteBatch);
          spriteBatch.End();
          base.Draw(gameTime);
       }
