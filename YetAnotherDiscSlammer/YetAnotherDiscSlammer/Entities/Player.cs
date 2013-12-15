@@ -54,7 +54,6 @@ namespace YetAnotherDiscSlammer.Entities
       public Rectangle PlayArea { get; protected set; }
       public Court Court { get; protected set; }
 
-
       private Buttons DiveButton = Buttons.A;
       private Boolean MovementStickLeft = true;
       protected PlayerIndex ControllerIndex { get; set; }

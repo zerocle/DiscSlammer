@@ -11,23 +11,11 @@ namespace YetAnotherDiscSlammer.Menu
       public Action Callback { get; protected set; }
       public Boolean IsEnabled { get; set; }
 
-      public MenuItem()
+      public MenuItem(String DisplayValue, Action Callback, Boolean IsEnabled = true)
       {
-
-      }
-
-      public Boolean Initialize(String DisplayValue, Action Callback, Boolean IsEnabled = true)
-      {
-         if (String.IsNullOrWhiteSpace(DisplayValue) || Callback == null)
-         {
-            return false;
-         }
          this.DisplayValue = DisplayValue;
          this.Callback = Callback;
          this.IsEnabled = IsEnabled;
-
-         return true;
-
       }
    }
 }

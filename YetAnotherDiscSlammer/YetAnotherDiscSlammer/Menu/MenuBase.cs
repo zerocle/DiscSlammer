@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace YetAnotherDiscSlammer.Menu
 {
-   class MenuBase
+   public class MenuBase
    {
       protected List<MenuItem> MenuOptions;
 
@@ -49,7 +49,7 @@ namespace YetAnotherDiscSlammer.Menu
          return true;
       }
 
-      public void LoadContent(ContentManager content, String Font = "Font/Standard")
+      public void LoadContent(ContentManager content, String Font = "Font/LargeFont")
       {
          this.MenuFont = content.Load<SpriteFont>(Font);
       }
@@ -86,9 +86,22 @@ namespace YetAnotherDiscSlammer.Menu
             Color drawColor = Color.White;
             if (a == SelectedIndex)
             {
-               drawColor = Color.Black;
+               if (MenuOptions[a].IsEnabled)
+               {
+                  drawColor = Color.Black;
+               }
+               else
+               {
+                  drawColor = Color.Gray;
+               }
             }
-
+            else
+            {
+               if (!MenuOptions[a].IsEnabled)
+               {
+                  drawColor = Color.DarkGray;
+               }
+            }
             spriteBatch.DrawString(MenuFont, MenuOptions[a].DisplayValue, position, drawColor);
             position.Y += MenuFont.LineSpacing + 5;
          }

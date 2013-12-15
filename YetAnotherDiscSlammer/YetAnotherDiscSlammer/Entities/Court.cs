@@ -32,10 +32,9 @@ namespace YetAnotherDiscSlammer.Entities
       public ContentManager Content { get; protected set; }
 
       #region Initialization
-      public Court(IServiceProvider serviceProvider)
+      public Court(ContentManager Content)
       {
-         Content = new ContentManager(serviceProvider, "Content");
-
+         this.Content = Content;
          int numPlayers = 2;
 
          Players = new Player[numPlayers];

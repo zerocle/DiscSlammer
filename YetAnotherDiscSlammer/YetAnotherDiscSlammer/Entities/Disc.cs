@@ -46,6 +46,7 @@ namespace YetAnotherDiscSlammer.Entities
       protected void LoadContent()
       {
          DiscSpinning = new Animation(Court.Content.Load<Texture2D>("Sprites/Disc/GameDiscSheet"), 0.05f, true);
+         sprite.PlayAnimation(DiscSpinning);
          overlay = new RectangleOverlay(Color.Red);
          overlay.LoadContent(Court.Content.ServiceProvider);
       }
