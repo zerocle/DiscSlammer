@@ -22,7 +22,7 @@ namespace YetAnotherDiscSlammer.Entities
 
       public Vector2 Velocity { get; protected set; }
       protected Vector2 _Movement;
-      protected const float MaxSpeed = 10.0f;
+      protected const float MaxSpeed = 20.0f;
 
       protected float boundingRadius = 16.0f;
       public override Rectangle  BoundingRectangle

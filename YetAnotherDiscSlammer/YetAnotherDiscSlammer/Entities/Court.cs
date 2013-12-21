@@ -57,13 +57,13 @@ namespace YetAnotherDiscSlammer.Entities
          int boundsHeight = Settings.Instance.Height - 100 - PlayerWidth;
 
          // set up our players
-         Players[0] = new Player(this, new Vector2(100, Settings.Instance.Height / 2), 
-            Character.Scorpion, PlayerIndex.One,
+         Players[0] = new Player(this, new Vector2(100, Settings.Instance.Height / 2),
+            Character.Scorpion, PlayerControlDevice.Controller,
             new Rectangle(50 + PlayerWidth / 2, 50 + PlayerWidth / 2, boundsWidth, boundsHeight));
 
          Players[1] = new Player(this, 
-            new Vector2(Settings.Instance.Width - 100, Settings.Instance.Height / 2), 
-            Character.Scorpion, PlayerIndex.Two,
+            new Vector2(Settings.Instance.Width - 100, Settings.Instance.Height / 2),
+            Character.Scorpion, PlayerControlDevice.AI,
             new Rectangle(Settings.Instance.Width - 50 - boundsWidth - PlayerWidth / 2, 
                           50 + PlayerWidth / 2, boundsWidth, boundsHeight), 180.0f);
          Players[0].HasDisc = true;

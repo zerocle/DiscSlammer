@@ -28,6 +28,7 @@ namespace YetAnotherDiscSlammer
       protected GameStates _CurrentState = GameStates.MainMenu;
       #region Menus
       protected MenuBase _mainMenu;
+      protected MenuBase _numOfPlayers;
       protected MenuBase _optionsMenu;
       #endregion
 

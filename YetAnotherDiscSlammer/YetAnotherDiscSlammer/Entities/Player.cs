@@ -18,6 +18,12 @@ namespace YetAnotherDiscSlammer.Entities
       Ogre,
       Troll,
    }
+   public enum PlayerControlDevice
+   {
+      Keyboard,
+      AI,
+      Controller,
+   }
    public class Player : Entity
    {
       #region Debug Stuff
@@ -56,7 +62,8 @@ namespace YetAnotherDiscSlammer.Entities
 
       private Buttons DiveButton = Buttons.A;
       private Boolean MovementStickLeft = true;
-      protected PlayerIndex ControllerIndex { get; set; }
+      protected PlayerControlDevice ControlDevice { get; set; }
+      protected PlayerIndex ControllerIndex;
 
       /// <summary>
       /// Gets whether or not the player's diving
@@ -99,10 +106,10 @@ namespace YetAnotherDiscSlammer.Entities
 
       #endregion
 
-      public Player(Court court, Vector2 position, Character character, PlayerIndex index, Rectangle PlayArea, float InitialDirection = 0.0f)
+      public Player(Court court, Vector2 position, Character character, PlayerControlDevice index, Rectangle PlayArea, float InitialDirection = 0.0f, PlayerIndex ControllerIndex=  PlayerIndex.One)
          :base(position, "Player")
       {
-         this.ControllerIndex = index;
+         this.ControlDevice = index;
          this.character = character;
          this.Court = court;
          this.angle = MathHelper.ToRadians(InitialDirection) + MathHelper.ToRadians(90);
@@ -110,24 +117,11 @@ namespace YetAnotherDiscSlammer.Entities
          this._StartPosition = position;
          this._IsOnAutoPilot = false;
 
+         if (ControlDevice == PlayerControlDevice.Controller)
+         {
+            this.ControllerIndex = ControllerIndex;
+         }
          #region Debug stuff
-         if (ControllerIndex == PlayerIndex.One)
-         {
-            // This is all just a debuggey thing to use the 
-            // right thumbstick for player 2
-            // If two controllers are being used, then this 
-            // isn't necessary
-            this.MovementStickLeft = true;
-            this.DiveButton = Buttons.A;
-         }
-         else
-         {
-            this.DiveButton = Buttons.B;
-            this.MovementStickLeft = false;
-         }
-         // We also hard code the player index so that 
-         // we can use one controller for testing.
-         ControllerIndex = PlayerIndex.One;
          #endregion
       }
 
@@ -168,12 +162,6 @@ namespace YetAnotherDiscSlammer.Entities
       {
          base.Update(gameTime);
          InputState inputState = new InputState();
-         // This is some debug stuff to force the return to the start position.
-         if (GamePad.GetState(ControllerIndex).IsButtonDown(Buttons.Y) || Keyboard.GetState().IsKeyDown(Keys.R)) 
-         {
-            _IsOnAutoPilot = true;
-            _AutoPilotDestination = _StartPosition;
-         }
 
          // When we're on autopilot we want to handle movement instead of the controller.
          if (_IsOnAutoPilot)
@@ -185,11 +173,22 @@ namespace YetAnotherDiscSlammer.Entities
          }
          else
          {
-            inputState = GetInput(GamePad.GetState(ControllerIndex), gameTime);
+            switch(ControlDevice)
+            {
+               case PlayerControlDevice.Controller:
+                  inputState = GetControllerInput(GamePad.GetState(ControllerIndex), gameTime);
+                  break;
+               case PlayerControlDevice.AI:
+                  inputState = GetAIInput(gameTime);
+                  break;
+               case PlayerControlDevice.Keyboard:
+                  inputState = GetKeyboardInput(Keyboard.GetState(), gameTime);
+                  break;
+            }
          }
          PhysicsState physicsState = CalculatePhysics(gameTime, inputState);
          ApplyPhysics(gameTime, physicsState);
-
+         ThrowDisc(gameTime, inputState);
          if (_IsOnAutoPilot)
          {
             if(Position.X + 1 > _AutoPilotDestination.X &&
@@ -214,9 +213,56 @@ namespace YetAnotherDiscSlammer.Entities
       }
 
       GamePadState _LastGameState;
-      private InputState GetInput(GamePadState gamePadState, GameTime gameTime)
+      KeyboardState _LastKeyboardState;
+      private InputState GetAIInput(GameTime gameTime)
       {
          InputState state = new InputState();
+         state.MovementStickDirection = Vector2.Zero;
+         if (HasDisc)
+         {
+            state.MovementStickDirection.X = -1;
+            state.IsDiveButtonDown = true;
+         }
+
+         return state;
+      }
+
+      private InputState GetKeyboardInput(KeyboardState keyState, GameTime gameTime)
+      {
+         InputState state = new InputState();
+         state.MovementStickDirection = Vector2.Zero;
+         if (keyState.IsKeyDown(Keys.Right) || keyState.IsKeyDown(Keys.D))
+         {
+            state.MovementStickDirection.X = 1;
+         }
+         if (keyState.IsKeyDown(Keys.Left) || keyState.IsKeyDown(Keys.A))
+         {
+            state.MovementStickDirection.X -= 1;
+         }
+         if (keyState.IsKeyDown(Keys.Up) || keyState.IsKeyDown(Keys.W))
+         {
+            state.MovementStickDirection.Y = -1;
+         }
+         if (keyState.IsKeyDown(Keys.Down) || keyState.IsKeyDown(Keys.S))
+         {
+            state.MovementStickDirection.Y += 1;
+         }
+         if (keyState.IsKeyDown(Keys.Space))
+         {
+            state.IsDiveButtonDown = true;
+         }
+         if (_LastKeyboardState.IsKeyDown(Keys.Space))
+         {
+            state.WasDiveButtonDown = true;
+         }
+         //state.MovementStickDirection.Normalize();
+         _LastKeyboardState = keyState;
+         return state;
+      }
+      private InputState GetControllerInput(GamePadState gamePadState, GameTime gameTime)
+      {
+         InputState state = new InputState();
+
          if (MovementStickLeft)
          {
             state.MovementStickDirection = gamePadState.ThumbSticks.Left * MoveStickScale;
@@ -249,20 +295,13 @@ namespace YetAnotherDiscSlammer.Entities
             // but they can still turn
             state.Angle = GetAngleFromVector(inputState.MovementStickDirection);
 
-            // we make sure the last state was up, so that the player doesn't throw 
-            // as soon as they catch it diving.
-            if (!inputState.WasDiveButtonDown && inputState.IsDiveButtonDown)
-            {
-               //Throw disc
-               _HadDisc = true;
-               Court.ThrowDisc(this.angle);
-            }
          }
          else
          {
             // If the user is pressing the dive button and doesnt
             // have the disc
-            if (inputState.IsDiveButtonDown)
+            if (inputState.IsDiveButtonDown && !inputState.WasDiveButtonDown ||
+                inputState.IsDiveButtonDown && IsDiving)
             {
                // and they still haven't dove past the max
                // amount of time
@@ -292,7 +331,7 @@ namespace YetAnotherDiscSlammer.Entities
                }
                else
                {
-                  angle = GetAngleFromVector(tempMovement);
+                  state.Angle = GetAngleFromVector(tempMovement);
                }
                state.Movement = tempMovement;
             }
@@ -330,13 +369,17 @@ namespace YetAnotherDiscSlammer.Entities
       private void ApplyPhysics(GameTime gameTime, PhysicsState physicsState)
       {
          float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-         Vector2 previousPosition = physicsState.Position;
-         float oldAngle = physicsState.Angle ;
-
-         // calculate our position after we move
-         physicsState.NextPosition = Position + physicsState.Velocity * elapsed;
-
+         // Right after they throw the disc, we don't want to let them move until the disc is
+         // out of their bounding box
+         if (_HadDisc)
+         {
+            physicsState.NextPosition = physicsState.Position;
+         }
+         else
+         {
+            // calculate our position after we move
+            physicsState.NextPosition = Position + physicsState.Velocity * elapsed;
+         }
          // Check for collisions
          HandleCollisions();
 
@@ -345,6 +388,8 @@ namespace YetAnotherDiscSlammer.Entities
 
          // Now we want to set our actual position
          this.Position = physicsState.NextPosition;
+
+         this.angle = physicsState.Angle;
 
          // If the collision stopped us from moving or the new 
          // position is neglegably small, reset the velocity to zero.
@@ -355,6 +400,21 @@ namespace YetAnotherDiscSlammer.Entities
             physicsState.Velocity.Y = 0;
 
          this.Velocity = physicsState.Velocity;
+      }
+
+      public void ThrowDisc(GameTime gameTime, InputState inputState)
+      {
+         if (HasDisc)
+         {
+            // we make sure the last state was up, so that the player doesn't throw 
+            // as soon as they catch it diving.
+            if (!inputState.WasDiveButtonDown && inputState.IsDiveButtonDown)
+            {
+               //Throw disc
+               _HadDisc = true;
+               Court.ThrowDisc(this.angle);
+            }
+         }
       }
 
       protected void CheckPlayArea(PhysicsState state)
