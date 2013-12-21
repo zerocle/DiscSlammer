@@ -180,7 +180,7 @@ namespace YetAnotherDiscSlammer.Entities
          {
             inputState.IsDiveButtonDown = false;
             inputState.WasDiveButtonDown = false;
-            inputState.MovementStickDirection = _AutoPilotDestination - Position ;
+            inputState.MovementStickDirection = Vector2.Normalize(_AutoPilotDestination - Position);
 
          }
          else
