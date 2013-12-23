@@ -56,6 +56,7 @@ namespace YetAnotherDiscSlammer.Entities
       protected Boolean _IsOnAutoPilot = false;
       protected Vector2 _AutoPilotDestination = Vector2.Zero;
       protected Vector2 _StartPosition = Vector2.Zero;
+      protected Action _OnAutoPilotDestReached = null;
 
       public Rectangle PlayArea { get; protected set; }
       public Court Court { get; protected set; }
@@ -74,6 +75,7 @@ namespace YetAnotherDiscSlammer.Entities
       // Jumping state
       private float diveTime;
 
+      private float _forwardAngle = 0.0f;
       private float angle = 0.0f;
 
       //Collision stuff
@@ -112,6 +114,7 @@ namespace YetAnotherDiscSlammer.Entities
          this.ControlDevice = index;
          this.character = character;
          this.Court = court;
+         this._forwardAngle = MathHelper.ToRadians(InitialDirection) + MathHelper.ToRadians(90);
          this.angle = MathHelper.ToRadians(InitialDirection) + MathHelper.ToRadians(90);
          this.PlayArea = PlayArea;
          this._StartPosition = position;
@@ -146,15 +149,11 @@ namespace YetAnotherDiscSlammer.Entities
       /// <summary>
       /// Resets the player to life.
       /// </summary>
-      /// <param name="position">The position to come to life at.</param>
-      public void Reset(Vector2 position)
+      public void Reset(Action OnResetFinished = null)
       {
          this._IsOnAutoPilot = true;
          this._AutoPilotDestination = _StartPosition;
-         Position = position;
-         Velocity = Vector2.Zero;
          IsDiving = false;
-         sprite.PlayAnimation(idleAnimation);
       }
 
       #region Update
@@ -168,8 +167,14 @@ namespace YetAnotherDiscSlammer.Entities
          {
             inputState.IsDiveButtonDown = false;
             inputState.WasDiveButtonDown = false;
-            inputState.MovementStickDirection = Vector2.Normalize(_AutoPilotDestination - Position);
-
+            if (_AutoPilotDestination == Position)
+            {
+               inputState.MovementStickDirection = Vector2.Zero;
+            }
+            else
+            {
+               inputState.MovementStickDirection = Vector2.Normalize(_AutoPilotDestination - Position);
+            }
          }
          else
          {
@@ -196,8 +201,15 @@ namespace YetAnotherDiscSlammer.Entities
                Position.Y + 1 > _AutoPilotDestination.Y &&
                Position.Y -1 < _AutoPilotDestination.Y)
             {
+               angle = _forwardAngle;
+               Velocity = Vector2.Zero;
                Position = _AutoPilotDestination;
                _IsOnAutoPilot = false;
+               if (_OnAutoPilotDestReached != null)
+               {
+                  _OnAutoPilotDestReached.Invoke();
+                  _OnAutoPilotDestReached = null;
+               }
             }
          }
 

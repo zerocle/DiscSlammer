@@ -55,9 +55,12 @@ namespace YetAnotherDiscSlammer.Menu
       }
 
       protected KeyboardState previousState;
+      protected GamePadState previousControllerState;
       public void Update(GameTime gameTime)
       {
          KeyboardState state = Keyboard.GetState();
+         
+         GamePadState controllerState = GamePad.GetState(PlayerIndex.One);
          // Ignore previous state until it has a value
          if (previousState != null)
          {
@@ -69,7 +72,8 @@ namespace YetAnotherDiscSlammer.Menu
             {
                SelectedIndex++;
             }
-            else if ((state.IsKeyDown(Keys.Enter) && previousState.IsKeyUp(Keys.Enter)) || (state.IsKeyDown(Keys.Space) && previousState.IsKeyUp(Keys.Space)))
+            else if ((state.IsKeyDown(Keys.Enter) && previousState.IsKeyUp(Keys.Enter)) || (state.IsKeyDown(Keys.Space) && previousState.IsKeyUp(Keys.Space)) ||
+                     (controllerState.IsButtonDown(Buttons.A) && previousControllerState.IsButtonUp(Buttons.A)))
             {
                MenuOptions[SelectedIndex].Callback();
             }

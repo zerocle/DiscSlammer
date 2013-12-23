@@ -16,7 +16,7 @@ namespace YetAnotherDiscSlammer.Entities
       protected Court _court;
       protected Vector2 _Size;
       protected Rectangle _BoundingRectangle;
-      protected PlayerIndex _PlayerIndex;
+      public PlayerIndex PlayerIndex { get; protected set; }
       public int Score { get; set; }
       public override Rectangle BoundingRectangle
       {
@@ -31,7 +31,7 @@ namespace YetAnotherDiscSlammer.Entities
       {
          this._court = court;
          this._Size = Size;
-         this._PlayerIndex = index;
+         this.PlayerIndex = index;
          this._BoundingRectangle = new Rectangle((int)Position.X, (int)Position.Y, (int)_Size.X, (int)_Size.Y);
          Outline.Colori = Color.Red;
       }
@@ -39,7 +39,7 @@ namespace YetAnotherDiscSlammer.Entities
       public void AddScore()
       {
          this.Score++;
-         _court.ResetDisc(_PlayerIndex);
+         _court.ResetDisc(PlayerIndex.One);
       }
 
       public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)

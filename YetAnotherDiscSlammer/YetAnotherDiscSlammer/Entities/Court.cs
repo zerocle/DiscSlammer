@@ -29,6 +29,8 @@ namespace YetAnotherDiscSlammer.Entities
       public ScoreZone[] ScoreZones { get; protected set; }
       public Wall[] Walls { get; protected set; }
 
+      public ScoreBoard scoreBoard { get; protected set; }
+
       public ContentManager Content { get; protected set; }
 
       #region Initialization
@@ -43,7 +45,7 @@ namespace YetAnotherDiscSlammer.Entities
          Walls = new Wall[numPlayers];
          GameDisc = new Disc(this);
          _CourtEntities = new List<Entity>();
-
+         scoreBoard = new ScoreBoard(new Vector2(Settings.Instance.Width / 2 - 128, 0), "BANSHEE", "Zerocle!");
          ConfigureCourt();
 
          LoadContent();
@@ -105,6 +107,7 @@ namespace YetAnotherDiscSlammer.Entities
          {
             w.LoadContent(Content);
          }
+         scoreBoard.LoadContent(Content);
       }
       #endregion
 
@@ -136,6 +139,9 @@ namespace YetAnotherDiscSlammer.Entities
             }
             GameDisc.Update(gameTime);
          }
+         if(GameDisc.IsInPlay)
+            CheckForScore(GameDisc);
+         scoreBoard.Update(gameTime);
       }
       #endregion
 
@@ -159,54 +165,37 @@ namespace YetAnotherDiscSlammer.Entities
             w.Draw(gameTime, spriteBatch);
          }
          GameDisc.Draw(gameTime, spriteBatch);
+         scoreBoard.Draw(gameTime, spriteBatch);
       }
       #endregion
 
       #region Helpers
+      protected bool canScore = true;
       public void ResetDisc(PlayerIndex PlayerToGiveTo)
       {
-         if (PlayerToGiveTo == PlayerIndex.One)
+         if (canScore)
          {
-            Players[0].HasDisc = true;
-         }
-         else
-         {
-            Players[0].HasDisc = false;
-         }
+            canScore = false;
 
-         if (PlayerToGiveTo == PlayerIndex.Two)
-         {
-            Players[1].HasDisc = true;
-         }
-         else
-         {
-            Players[1].HasDisc = false;
+            GameDisc.TakeOutOfPlay();
+            PlayersAtDestination = 0;
+            Players[0].Reset(PlayerReachedDestination);
+            Players[1].Reset(PlayerReachedDestination);
          }
       }
-      public bool CollidesWithWall(Disc disc)
+
+      protected int PlayersAtDestination = 0;
+      protected void PlayerReachedDestination()
       {
-         Rectangle discBounds = disc.BoundingRectangle;
-         foreach (Wall wall in Walls)
+         lock(this)
          {
-            if (wall.BoundingRectangle.Intersects(discBounds))
+            PlayersAtDestination++;
+            if (PlayersAtDestination == Players.Length)
             {
-               return true;
+               //GameDisc.ThrowTo(Players[1]);
             }
          }
-         return false;
       }
-      public bool DoesCollideWithDisc(Player whom)
-      {
-         Rectangle PlayerBounds = whom.BoundingRectangle;
-         Rectangle DiscBounds = GameDisc.BoundingRectangle;
-         if ((Math.Abs(whom.Position.X - GameDisc.Position.X) * 2 < (PlayerBounds.Width + DiscBounds.Width)) &&
-            (Math.Abs(whom.Position.Y - GameDisc.Position.Y) * 2 < (PlayerBounds.Height + DiscBounds.Height)))
-         {
-            return true;
-         }
-         return false;
-      }
-
       public bool CollidesWith(Entity entity, String EntityType = "")
       {
          foreach (Entity courtEntity in _CourtEntities)
@@ -236,6 +225,35 @@ namespace YetAnotherDiscSlammer.Entities
          }
          return entities.ToArray();
       }
+
+      public void CheckForScore(Disc gameDisc)
+      {
+         
+         foreach (Player player in Players)
+         {
+            // If a player has the disc, we don't want to score
+            if (player.HasDisc)
+               return;
+
+         }
+         foreach (ScoreZone zone in ScoreZones)
+         {
+            if (zone.BoundingRectangle.Intersects(gameDisc.BoundingRectangle))
+            {
+               if (zone.PlayerIndex == PlayerIndex.One)
+               {
+                  scoreBoard.PlayerTwoScore++;
+               }
+               else if (zone.PlayerIndex == PlayerIndex.Two)
+               {
+                  scoreBoard.PlayerOneScore++;
+               }
+               ResetDisc(zone.PlayerIndex);
+               break;
+            }
+         }
+      }
+
       public void ThrowDisc(float angle)
       {
          GameDisc.Throw(angle);

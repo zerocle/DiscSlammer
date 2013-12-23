@@ -109,12 +109,14 @@
   <ItemGroup>
     <Compile Include="Common\Animation.cs" />
     <Compile Include="Common\AnimationPlayer.cs" />
+    <Compile Include="Common\FontReader.cs" />
     <Compile Include="Common\RectangleOverlay.cs" />
     <Compile Include="Common\Settings.cs" />
     <Compile Include="Entities\Court.cs" />
     <Compile Include="Entities\Disc.cs" />
     <Compile Include="Entities\Entity.cs" />
     <Compile Include="Entities\Player.cs" />
+    <Compile Include="Entities\ScoreBoard.cs" />
     <Compile Include="Entities\ScoreZone.cs" />
     <Compile Include="Entities\Wall.cs" />
     <Compile Include="Helpers\InputState.cs" />

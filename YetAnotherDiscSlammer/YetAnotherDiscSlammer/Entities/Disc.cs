@@ -20,7 +20,8 @@ namespace YetAnotherDiscSlammer.Entities
       public Court Court {get; protected set; }
       public Boolean IsScored { get; protected set; }
 
-      public Vector2 Velocity { get; protected set; }
+      public Vector2 Velocity { get; set; }
+      public Boolean IsInPlay { get; protected set; }
       protected Vector2 _Movement;
       protected const float MaxSpeed = 20.0f;
 
@@ -39,6 +40,7 @@ namespace YetAnotherDiscSlammer.Entities
       public Disc(Court court)
          :base(Vector2.Zero, "Disc")
       {
+         IsInPlay = true;
          this.Court = court;
          LoadContent();
       }
@@ -53,30 +55,26 @@ namespace YetAnotherDiscSlammer.Entities
 
       public override void Update(GameTime gameTime)
       {
-         sprite.PlayAnimation(DiscSpinning);
-         Vector2 previousPosition = this.Position;
-         this.Position += this._Movement;
-         if (Court.CollidesWith(this, "Wall"))
+         if (this.IsInPlay)
          {
-            this._Movement.Y = this._Movement.Y * -1;
-            this.Position = previousPosition += this._Movement;
-         }
-         if (Court.CollidesWith(this, "ScoreZone"))
-         {
-            Entity[] zones = Court.GetCollisionEntities(this, "ScoreZone");
-            foreach (Entity zone in zones)
+            sprite.PlayAnimation(DiscSpinning);
+            Vector2 previousPosition = this.Position;
+            this.Position += this._Movement;
+            if (Court.CollidesWith(this, "Wall"))
             {
-               ScoreZone sz = zone as ScoreZone;
-               sz.AddScore();
-               
+               this._Movement.Y = this._Movement.Y * -1;
+               this.Position = previousPosition += this._Movement;
             }
          }
       }
 
       public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
       {
-         overlay.Draw(gameTime, spriteBatch, BoundingRectangle);
-         sprite.Draw(gameTime, spriteBatch, Position, 0);
+         if (this.IsInPlay)
+         {
+            overlay.Draw(gameTime, spriteBatch, BoundingRectangle);
+            sprite.Draw(gameTime, spriteBatch, Position, 0);
+         }
       }
 
       public void Throw(float angle)
@@ -84,6 +82,14 @@ namespace YetAnotherDiscSlammer.Entities
          float x = (float)Math.Sin(angle);
          float y = -1 * (float)Math.Cos(angle);
          this._Movement = new Vector2(x, y) * MaxSpeed ;
+      }
+
+      public void TakeOutOfPlay()
+      {
+         IsInPlay = false;
+         this.Position = Vector2.Zero;
+         this.Velocity = Vector2.Zero;
+         this._Movement = Vector2.Zero;
       }
 
       public void SetPosition(Vector2 position)
