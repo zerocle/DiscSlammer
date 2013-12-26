@@ -21,8 +21,10 @@ namespace YetAnotherDiscSlammer.Common
       private static Settings _instance;
       public int Height { get; set; }
       public int Width { get; set; }
+      public bool ShowBoundingBox { get; set; }
       protected Settings()
       {
+         ShowBoundingBox = false;
       }
 
       public void Initialize(int Height, int Width)

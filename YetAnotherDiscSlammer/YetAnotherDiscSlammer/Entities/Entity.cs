@@ -49,8 +49,11 @@ namespace YetAnotherDiscSlammer.Entities
 
       public virtual void Draw(GameTime gameTime, SpriteBatch spriteBatch)
       {
-         StringOffset = 0;
-         DrawOutline(gameTime, spriteBatch);
+         if (Settings.Instance.ShowBoundingBox)
+         {
+            StringOffset = 0;
+            DrawOutline(gameTime, spriteBatch);
+         }
       }
 
       public void DrawOutline(GameTime gameTime, SpriteBatch spriteBatch)
@@ -61,10 +64,13 @@ namespace YetAnotherDiscSlammer.Entities
       public void DrawString(SpriteBatch spriteBatch,
                               String Value)
       {
-         Vector2 pos = Position;
-         pos.Y += StringOffset;
-         spriteBatch.DrawString(DebugFont, Value, pos, Color.White);
-         StringOffset += 10;
+         if (Settings.Instance.ShowBoundingBox)
+         {
+            Vector2 pos = Position;
+            pos.Y += StringOffset;
+            spriteBatch.DrawString(DebugFont, Value, pos, Color.White);
+            StringOffset += 10;
+         }
       }
    }
 }

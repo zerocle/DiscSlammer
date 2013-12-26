@@ -15,15 +15,27 @@ namespace YetAnotherDiscSlammer.Entities
       #region Debug
       RectangleOverlay overlay;
       #endregion
+      #region Contstants
+      private float MAX_HOLD_TIME = 2.0F;
+      
+      #endregion
+      #region Drawing Stuff
+      private Texture2D DiscTexture;
+      private Texture2D DiscSpinningTexture;
       private Animation DiscSpinning;
+      private Animation DiscStopped;
       private AnimationPlayer sprite;
-      public Court Court {get; protected set; }
-      public Boolean IsScored { get; protected set; }
+      #endregion
 
+      public Court Court {get; protected set; }
+
+      public Boolean IsHeld { get; set; }
       public Vector2 Velocity { get; set; }
       public Boolean IsInPlay { get; protected set; }
+      public Boolean IgnoreWalls { get; protected set; }
       protected Vector2 _Movement;
       protected const float MaxSpeed = 20.0f;
+      protected const float MinSpeed = 5.0f;
 
       protected float boundingRadius = 16.0f;
       public override Rectangle  BoundingRectangle
@@ -41,29 +53,43 @@ namespace YetAnotherDiscSlammer.Entities
          :base(Vector2.Zero, "Disc")
       {
          IsInPlay = true;
+         IgnoreWalls = false;
          this.Court = court;
-         LoadContent();
       }
 
-      protected void LoadContent()
+      public override void LoadContent(ContentManager Content)
       {
-         DiscSpinning = new Animation(Court.Content.Load<Texture2D>("Sprites/Disc/GameDiscSheet"), 0.05f, true);
+         DiscTexture = Content.Load<Texture2D>("Sprites/Disc/GameDisc");
+         DiscSpinningTexture = Content.Load<Texture2D>("Sprites/Disc/GameDiscSheet");
+         DiscSpinning = new Animation(DiscSpinningTexture, 0.05f, true);
+         DiscStopped = new Animation(DiscTexture, 0.05f, true);
          sprite.PlayAnimation(DiscSpinning);
          overlay = new RectangleOverlay(Color.Red);
          overlay.LoadContent(Court.Content.ServiceProvider);
       }
-
+      protected float heldTime = 0.0f;
       public override void Update(GameTime gameTime)
       {
          if (this.IsInPlay)
          {
-            sprite.PlayAnimation(DiscSpinning);
-            Vector2 previousPosition = this.Position;
-            this.Position += this._Movement;
-            if (Court.CollidesWith(this, "Wall"))
+            if (this.IsHeld)
             {
-               this._Movement.Y = this._Movement.Y * -1;
-               this.Position = previousPosition += this._Movement;
+               heldTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+               sprite.PlayAnimation(DiscStopped);
+            }
+            else
+            {
+               sprite.PlayAnimation(DiscSpinning);
+               Vector2 previousPosition = this.Position;
+               this.Position += this._Movement;
+               if (!IgnoreWalls)
+               {
+                  if (Court.CollidesWith(this, "Wall"))
+                  {
+                     this._Movement.Y = this._Movement.Y * -1;
+                     this.Position = previousPosition += this._Movement;
+                  }
+               }
             }
          }
       }
@@ -81,15 +107,34 @@ namespace YetAnotherDiscSlammer.Entities
       {
          float x = (float)Math.Sin(angle);
          float y = -1 * (float)Math.Cos(angle);
-         this._Movement = new Vector2(x, y) * MaxSpeed ;
+         float time = Math.Min(heldTime, MAX_HOLD_TIME);
+         float ratio = 1 - time / MAX_HOLD_TIME;
+         float speedMult = (MaxSpeed - MinSpeed) * ratio + MinSpeed;
+         this._Movement = new Vector2(x, y) * speedMult;
+         heldTime = 0.0f;
+      }
+
+      public void ThrowTo(Vector2 ThrowToPosition)
+      {
+         IsInPlay = true;
+         IgnoreWalls = true;
+         Vector2 movementVector = ThrowToPosition - Position;
+         movementVector.Normalize();
+         this._Movement = movementVector * MinSpeed;
       }
 
       public void TakeOutOfPlay()
       {
          IsInPlay = false;
-         this.Position = Vector2.Zero;
+         this.Position = new Vector2(Settings.Instance.Width / 2, Settings.Instance.Height);
          this.Velocity = Vector2.Zero;
          this._Movement = Vector2.Zero;
+      }
+
+      public void BringInPlay()
+      {
+         this.IsInPlay = true;
+         this.IgnoreWalls = false;
       }
 
       public void SetPosition(Vector2 position)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Microsoft.Xna;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -19,6 +20,9 @@ namespace YetAnotherDiscSlammer.Entities
       #endregion
 
       public Texture2D CourtBackground { get; protected set; }
+      public Texture2D CourtBottomWall { get; protected set; }
+      public Texture2D CourtTopWall { get; protected set; }
+      public Texture2D GoalLeft { get; protected set; }
 
       protected List<Entity> _CourtEntities;
       public Player[] Players { get; protected set; }
@@ -91,10 +95,15 @@ namespace YetAnotherDiscSlammer.Entities
          _CourtEntities.Add(Walls[0]);
          _CourtEntities.Add(Walls[1]);
          _CourtEntities.Add(GameDisc);
+         ResetDisc(PlayerIndex.One);
       }
 
       public void LoadContent()
       {
+         CourtBackground = Content.Load<Texture2D>("Sprites/Court/Measurement");
+         GoalLeft = Content.Load<Texture2D>("Sprites/Court/GoalLeft");
+         CourtBottomWall = Content.Load<Texture2D>("Sprites/Court/BottomWall");
+         CourtTopWall = Content.Load<Texture2D>("Sprites/Court/BottomWall");
          foreach (Player p in Players)
          {
             p.LoadContent(Content);
@@ -107,6 +116,7 @@ namespace YetAnotherDiscSlammer.Entities
          {
             w.LoadContent(Content);
          }
+         GameDisc.LoadContent(Content);
          scoreBoard.LoadContent(Content);
       }
       #endregion
@@ -119,26 +129,19 @@ namespace YetAnotherDiscSlammer.Entities
       /// </summary>
       public void Update(GameTime gameTime)
       {
-         if (GameDisc.IsScored)
+         foreach (Player p in Players)
          {
-            //DoScoring
+            if (p.HasDisc)
+            {
+               GameDisc.SetPosition(p.RightHandPosition);
+            }
+            p.Update(gameTime);
          }
-         else
+         foreach (ScoreZone sz in ScoreZones)
          {
-            foreach (Player p in Players)
-            {
-               if (p.HasDisc)
-               {
-                  GameDisc.SetPosition(p.RightHandPosition);
-               }
-               p.Update(gameTime);
-            }
-            foreach (ScoreZone sz in ScoreZones)
-            {
-               sz.Update(gameTime);
-            }
-            GameDisc.Update(gameTime);
+            sz.Update(gameTime);
          }
+         GameDisc.Update(gameTime);
          if(GameDisc.IsInPlay)
             CheckForScore(GameDisc);
          scoreBoard.Update(gameTime);
@@ -151,7 +154,9 @@ namespace YetAnotherDiscSlammer.Entities
       /// </summary>
       public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
       {
-
+         spriteBatch.Draw(CourtBackground, new Rectangle(0, 0, Settings.Instance.Width, Settings.Instance.Height), Color.White);
+         spriteBatch.Draw(CourtTopWall, new Rectangle(0, -20, Settings.Instance.Width, 100), Color.White);
+         scoreBoard.Draw(gameTime, spriteBatch);
          foreach (Player p in Players)
          {
             p.Draw(gameTime, spriteBatch);
@@ -164,36 +169,66 @@ namespace YetAnotherDiscSlammer.Entities
          {
             w.Draw(gameTime, spriteBatch);
          }
+         spriteBatch.Draw(GoalLeft, new Rectangle(0, 50, 100, 400), Color.White);
+
+         spriteBatch.Draw(CourtBottomWall, new Rectangle(0, 370, Settings.Instance.Width, 100), Color.White);
          GameDisc.Draw(gameTime, spriteBatch);
-         scoreBoard.Draw(gameTime, spriteBatch);
       }
       #endregion
 
       #region Helpers
-      protected bool canScore = true;
       public void ResetDisc(PlayerIndex PlayerToGiveTo)
       {
-         if (canScore)
+         GameDisc.TakeOutOfPlay();
+         Player playerToGive = null;
+         switch(PlayerToGiveTo)
          {
-            canScore = false;
-
-            GameDisc.TakeOutOfPlay();
-            PlayersAtDestination = 0;
-            Players[0].Reset(PlayerReachedDestination);
-            Players[1].Reset(PlayerReachedDestination);
+            case PlayerIndex.One:
+               playerToGive = Players[0];
+               break;
+            case PlayerIndex.Two:
+               playerToGive = Players[1];
+               break;
          }
+         Players[0].Reset();
+         Players[1].Reset();
+         Thread thread = new Thread(new ParameterizedThreadStart(waitForReset));
+         thread.Start(playerToGive);
+      }
+      protected void waitForReset(object oPlayerToStart)
+      {
+         Player toGive = (Player)oPlayerToStart;
+         Boolean stillOnAuto = false;
+         do
+         {
+            stillOnAuto = false;
+            foreach (Player p in Players)
+            {
+               if (p.IsOnAutoPilot)
+               {
+                  stillOnAuto = true;
+               }
+            }
+         } while (stillOnAuto);
+
+         GameDisc.ThrowTo(toGive.Position);
+         Thread thread = new Thread(new ParameterizedThreadStart(WaitForPlayerToCatch));
+         thread.Start(toGive);
+
       }
 
-      protected int PlayersAtDestination = 0;
-      protected void PlayerReachedDestination()
+      protected void WaitForPlayerToCatch(Object oPlayer)
       {
-         lock(this)
+         Player player = (Player)oPlayer;
+
+         while (!player.HasDisc)
          {
-            PlayersAtDestination++;
-            if (PlayersAtDestination == Players.Length)
-            {
-               //GameDisc.ThrowTo(Players[1]);
-            }
+            Thread.Sleep(100);
+         }
+         GameDisc.BringInPlay();
+         foreach (Player p in Players)
+         {
+            p.EnableControls();
          }
       }
       public bool CollidesWith(Entity entity, String EntityType = "")
@@ -256,6 +291,7 @@ namespace YetAnotherDiscSlammer.Entities
 
       public void ThrowDisc(float angle)
       {
+         GameDisc.IsHeld = false;
          GameDisc.Throw(angle);
       }
       #endregion

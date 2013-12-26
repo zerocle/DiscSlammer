@@ -53,7 +53,8 @@ namespace YetAnotherDiscSlammer.Entities
       public Boolean HasDisc { get; set; }
       protected Boolean _HadDisc = false;
 
-      protected Boolean _IsOnAutoPilot = false;
+      public Boolean IsPlayerControlAllowed { get; protected set; }
+      public Boolean IsOnAutoPilot { get; protected set; }
       protected Vector2 _AutoPilotDestination = Vector2.Zero;
       protected Vector2 _StartPosition = Vector2.Zero;
       protected Action _OnAutoPilotDestReached = null;
@@ -118,11 +119,15 @@ namespace YetAnotherDiscSlammer.Entities
          this.angle = MathHelper.ToRadians(InitialDirection) + MathHelper.ToRadians(90);
          this.PlayArea = PlayArea;
          this._StartPosition = position;
-         this._IsOnAutoPilot = false;
-
+         this.IsOnAutoPilot = false;
          if (ControlDevice == PlayerControlDevice.Controller)
          {
+            this._LastGameState = GamePad.GetState(ControllerIndex);
             this.ControllerIndex = ControllerIndex;
+         }
+         else
+         {
+            this._LastKeyboardState = Keyboard.GetState();
          }
          #region Debug stuff
          #endregion
@@ -151,8 +156,10 @@ namespace YetAnotherDiscSlammer.Entities
       /// </summary>
       public void Reset(Action OnResetFinished = null)
       {
-         this._IsOnAutoPilot = true;
+         this.IsPlayerControlAllowed = false;
+         this.IsOnAutoPilot = true;
          this._AutoPilotDestination = _StartPosition;
+         this._OnAutoPilotDestReached = OnResetFinished;
          IsDiving = false;
       }
 
@@ -163,7 +170,7 @@ namespace YetAnotherDiscSlammer.Entities
          InputState inputState = new InputState();
 
          // When we're on autopilot we want to handle movement instead of the controller.
-         if (_IsOnAutoPilot)
+         if (IsOnAutoPilot)
          {
             inputState.IsDiveButtonDown = false;
             inputState.WasDiveButtonDown = false;
@@ -178,23 +185,32 @@ namespace YetAnotherDiscSlammer.Entities
          }
          else
          {
-            switch(ControlDevice)
+            if (IsPlayerControlAllowed)
             {
-               case PlayerControlDevice.Controller:
-                  inputState = GetControllerInput(GamePad.GetState(ControllerIndex), gameTime);
-                  break;
-               case PlayerControlDevice.AI:
-                  inputState = GetAIInput(gameTime);
-                  break;
-               case PlayerControlDevice.Keyboard:
-                  inputState = GetKeyboardInput(Keyboard.GetState(), gameTime);
-                  break;
+               switch (ControlDevice)
+               {
+                  case PlayerControlDevice.Controller:
+                     inputState = GetControllerInput(GamePad.GetState(ControllerIndex), gameTime);
+                     break;
+                  case PlayerControlDevice.AI:
+                     inputState = GetAIInput(gameTime);
+                     break;
+                  case PlayerControlDevice.Keyboard:
+                     inputState = GetKeyboardInput(Keyboard.GetState(), gameTime);
+                     break;
+               }
+            }
+            else
+            {
+               inputState.IsDiveButtonDown = false;
+               inputState.WasDiveButtonDown = false;
+               inputState.MovementStickDirection = Vector2.Zero;
             }
          }
          PhysicsState physicsState = CalculatePhysics(gameTime, inputState);
          ApplyPhysics(gameTime, physicsState);
          ThrowDisc(gameTime, inputState);
-         if (_IsOnAutoPilot)
+         if (IsOnAutoPilot)
          {
             if(Position.X + 1 > _AutoPilotDestination.X &&
                Position.X - 1 < _AutoPilotDestination.X &&
@@ -204,7 +220,7 @@ namespace YetAnotherDiscSlammer.Entities
                angle = _forwardAngle;
                Velocity = Vector2.Zero;
                Position = _AutoPilotDestination;
-               _IsOnAutoPilot = false;
+               IsOnAutoPilot = false;
                if (_OnAutoPilotDestReached != null)
                {
                   _OnAutoPilotDestReached.Invoke();
@@ -238,7 +254,6 @@ namespace YetAnotherDiscSlammer.Entities
 
          return state;
       }
-
       private InputState GetKeyboardInput(KeyboardState keyState, GameTime gameTime)
       {
          InputState state = new InputState();
@@ -400,9 +415,10 @@ namespace YetAnotherDiscSlammer.Entities
 
          // Now we want to set our actual position
          this.Position = physicsState.NextPosition;
-
-         this.angle = physicsState.Angle;
-
+         if (physicsState.Angle != 0.0f)
+         {
+            this.angle = physicsState.Angle;
+         }
          // If the collision stopped us from moving or the new 
          // position is neglegably small, reset the velocity to zero.
          if (physicsState.NextPosition.X == physicsState.Position.X)
@@ -461,6 +477,7 @@ namespace YetAnotherDiscSlammer.Entities
             }
             else
             {
+               Court.GameDisc.IsHeld = true;
                BoundingOverlay.Colori = Color.Green;
                HasDisc = true;
             }
@@ -526,12 +543,18 @@ namespace YetAnotherDiscSlammer.Entities
       public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
       {
          base.Draw(gameTime, spriteBatch);
-         PlayAreaOverlay.Draw(gameTime, spriteBatch, PlayArea);
-         BoundingOverlay.Draw(gameTime, spriteBatch, BoundingRectangle);
+         if (Settings.Instance.ShowBoundingBox)
+         {
+            PlayAreaOverlay.Draw(gameTime, spriteBatch, PlayArea);
+            BoundingOverlay.Draw(gameTime, spriteBatch, BoundingRectangle);
+         }
          // Draw that sprite.
          sprite.Draw(gameTime, spriteBatch, Position, angle);
-         DrawString(spriteBatch, "P: " + Position.ToString());
-         DrawString(spriteBatch, "A: " + angle.ToString());
+         if (Settings.Instance.ShowBoundingBox)
+         {
+            DrawString(spriteBatch, "P: " + Position.ToString());
+            DrawString(spriteBatch, "A: " + angle.ToString());
+         }
          //DrawString(spriteBatch, "JP: " + movementStickDirection.ToString());
       }
       #endregion
@@ -546,6 +569,11 @@ namespace YetAnotherDiscSlammer.Entities
             tempAngle = (float)Math.Atan2(direction.Y, direction.X) + MathHelper.ToRadians(90);
          }
          return tempAngle;
+      }
+
+      public void EnableControls()
+      {
+         IsPlayerControlAllowed = true;
       }
       #endregion
    }

@@ -10,3 +10,6 @@ Content\Sprites\Disc\GameDiscSheet.xnb
 Content\Font\LargeFont.xnb
 Content\Font\ScoreBoardFont.xnb
 Content\Sprites\ScoreBoard\ScoreBoardBackground.xnb
+Content\Sprites\Court\Measurement.xnb
+Content\Sprites\Court\BottomWall.xnb
+Content\Sprites\Court\GoalLeft.xnb
