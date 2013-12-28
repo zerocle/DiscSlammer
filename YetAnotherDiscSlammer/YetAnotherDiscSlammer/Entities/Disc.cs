@@ -22,6 +22,7 @@ namespace YetAnotherDiscSlammer.Entities
       #region Drawing Stuff
       private Texture2D DiscTexture;
       private Texture2D DiscSpinningTexture;
+      private Texture2D ShadowTexture;
       private Animation DiscSpinning;
       private Animation DiscStopped;
       private AnimationPlayer sprite;
@@ -61,6 +62,7 @@ namespace YetAnotherDiscSlammer.Entities
       {
          DiscTexture = Content.Load<Texture2D>("Sprites/Disc/GameDisc");
          DiscSpinningTexture = Content.Load<Texture2D>("Sprites/Disc/GameDiscSheet");
+         ShadowTexture = Content.Load<Texture2D>("Sprites/Disc/DiscShadow");
          DiscSpinning = new Animation(DiscSpinningTexture, 0.05f, true);
          DiscStopped = new Animation(DiscTexture, 0.05f, true);
          sprite.PlayAnimation(DiscSpinning);
@@ -98,7 +100,9 @@ namespace YetAnotherDiscSlammer.Entities
       {
          if (this.IsInPlay)
          {
-            overlay.Draw(gameTime, spriteBatch, BoundingRectangle);
+            base.Draw(gameTime, spriteBatch);
+            Vector2 shadowOffset = new Vector2(0, 20);
+            spriteBatch.Draw(ShadowTexture, Position + shadowOffset, null, Color.White, 0.0f, new Vector2(ShadowTexture.Width / 2, ShadowTexture.Height / 2), 1.0f, SpriteEffects.None, 1.0f);
             sprite.Draw(gameTime, spriteBatch, Position, 0);
          }
       }

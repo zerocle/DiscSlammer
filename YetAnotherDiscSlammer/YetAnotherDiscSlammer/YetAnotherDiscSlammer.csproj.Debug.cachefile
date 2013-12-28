@@ -13,3 +13,12 @@ Content\Sprites\ScoreBoard\ScoreBoardBackground.xnb
 Content\Sprites\Court\Measurement.xnb
 Content\Sprites\Court\BottomWall.xnb
 Content\Sprites\Court\GoalLeft.xnb
+Content\Sprites\Disc\DiscShadow.xnb
+Content\Sprites\Players\Guile\guile.xnb
+Content\Sprites\Players\Kid\kid.xnb
+Content\Sprites\Players\Serge\serge.xnb
+Content\Sprites\Players\Viper\viper.xnb
+Content\Sprites\Players\Guile\guile_idle_1x.xnb
+Content\Sprites\Players\Guile\guile_ready_1x.xnb
+Content\Sprites\Players\Guile\guile_run_1x.xnb
+Content\Sprites\Players\Guile\guile_walk_1x.xnb

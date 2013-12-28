@@ -121,8 +121,10 @@
     <Compile Include="Entities\Wall.cs" />
     <Compile Include="Helpers\InputState.cs" />
     <Compile Include="Helpers\PhysicsState.cs" />
+    <Compile Include="Menu\Character.cs" />
     <Compile Include="Menu\MenuBase.cs" />
     <Compile Include="Menu\MenuItem.cs" />
+    <Compile Include="Menu\PlayerChoiceMenu.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="DiscSlammerGame.cs" />

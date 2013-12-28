@@ -19,12 +19,14 @@ namespace YetAnotherDiscSlammer
       Options,
       Playing,
       Paused,
+      PlayerChoice,
    }
    public class StateManager
    {
       protected DiscSlammerGame _game;
       protected ContentManager _Content;
       protected Court _Court;
+      protected PlayerChoiceMenu _PlayerChoiceMenu;
       protected GameStates _CurrentState = GameStates.MainMenu;
       #region Menus
       protected MenuBase _mainMenu;
@@ -40,7 +42,7 @@ namespace YetAnotherDiscSlammer
       public Boolean Initialize()
       {
          List<MenuItem> menuItems = new List<MenuItem>();
-         menuItems.Add(new MenuItem("Start Game", new Action(StartGameMethod)));
+         menuItems.Add(new MenuItem("Start Game", new Action(ShowPlayerChoice)));
          menuItems.Add( new MenuItem("Options", new Action(ShowOptions)));
          menuItems.Add(new MenuItem("Quit Game", new Action(ExitGameMethod)));
          _mainMenu = new MenuBase();
@@ -68,6 +70,9 @@ namespace YetAnotherDiscSlammer
             case GameStates.Options:
                _optionsMenu.Update(gameTime);
                break;
+            case GameStates.PlayerChoice:
+               _PlayerChoiceMenu.Update(gameTime);
+               break;
          }
       }
 
@@ -84,6 +89,9 @@ namespace YetAnotherDiscSlammer
                break;
             case GameStates.Options:
                _optionsMenu.Draw(gameTime, spriteBatch);
+               break;
+            case GameStates.PlayerChoice:
+               _PlayerChoiceMenu.Draw(gameTime, spriteBatch);
                break;
          }
       }
@@ -106,6 +114,15 @@ namespace YetAnotherDiscSlammer
          _CurrentState = OptionsPreviousState;
       }
       protected void holder(){}
+      protected void ShowPlayerChoice()
+      {
+         _PlayerChoiceMenu = new PlayerChoiceMenu();
+         if (_PlayerChoiceMenu.Init(_Content))
+         {
+            _CurrentState = GameStates.PlayerChoice;
+         }
+      }
+
       protected void StartGameMethod()
       {
          _Court = new Court(_Content);
