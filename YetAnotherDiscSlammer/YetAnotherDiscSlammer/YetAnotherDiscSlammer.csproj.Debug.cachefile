@@ -22,3 +22,15 @@ Content\Sprites\Players\Guile\guile_idle_1x.xnb
 Content\Sprites\Players\Guile\guile_ready_1x.xnb
 Content\Sprites\Players\Guile\guile_run_1x.xnb
 Content\Sprites\Players\Guile\guile_walk_1x.xnb
+Content\Sprites\UI\PlayerOneChooser.xnb
+Content\Sprites\UI\PlayerTwoChooser.xnb
+Content\Sprites\Players\Kid\kid_idle.xnb
+Content\Sprites\Players\Kid\kid_run.xnb
+Content\Sprites\Players\Kid\kid_ready.xnb
+Content\Sprites\Players\Kid\kid_walk.xnb
+Content\Sprites\Players\Guile\guile_walk.xnb
+Content\Sprites\Players\Viper\viper_walk.xnb
+Content\Sprites\Players\Serge\serge_walk.xnb
+Content\Sprites\Players\Guile\guile_ready.xnb
+Content\Sprites\Players\Serge\serge_ready.xnb
+Content\Sprites\Players\Viper\viper_ready.xnb

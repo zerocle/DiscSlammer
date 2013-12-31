@@ -25,6 +25,7 @@ namespace YetAnotherDiscSlammer.Entities
       private Texture2D ShadowTexture;
       private Animation DiscSpinning;
       private Animation DiscStopped;
+      private SpriteSheet DiscSpriteSheet;
       private AnimationPlayer sprite;
       #endregion
 
@@ -63,9 +64,12 @@ namespace YetAnotherDiscSlammer.Entities
          DiscTexture = Content.Load<Texture2D>("Sprites/Disc/GameDisc");
          DiscSpinningTexture = Content.Load<Texture2D>("Sprites/Disc/GameDiscSheet");
          ShadowTexture = Content.Load<Texture2D>("Sprites/Disc/DiscShadow");
-         DiscSpinning = new Animation(DiscSpinningTexture, 0.05f, true);
-         DiscStopped = new Animation(DiscTexture, 0.05f, true);
-         sprite.PlayAnimation(DiscSpinning);
+         DiscSpriteSheet = new SpriteSheet(DiscSpinningTexture);
+         DiscSpinning = new Animation(DiscSpriteSheet, 0.05f, 0, 8, true);
+         DiscStopped = new Animation(DiscSpriteSheet, 1.0f, 0, 0, false);
+
+         sprite.SetAnimation(DiscStopped);
+
          overlay = new RectangleOverlay(Color.Red);
          overlay.LoadContent(Court.Content.ServiceProvider);
       }
@@ -77,11 +81,11 @@ namespace YetAnotherDiscSlammer.Entities
             if (this.IsHeld)
             {
                heldTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-               sprite.PlayAnimation(DiscStopped);
+               sprite.SetAnimation(DiscStopped);
             }
             else
             {
-               sprite.PlayAnimation(DiscSpinning);
+               sprite.SetAnimation(DiscSpinning);
                Vector2 previousPosition = this.Position;
                this.Position += this._Movement;
                if (!IgnoreWalls)

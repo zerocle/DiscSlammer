@@ -10,18 +10,17 @@ using Microsoft.Xna.Framework.Input;
 namespace YetAnotherDiscSlammer.Common
 {
    /// <summary>
-   /// Controls playback of an Animation.
+   /// Controls playback of an AnimationTexture.
    /// </summary>
-   struct AnimationPlayer
+   public struct AnimationPlayer
    {
-      /// <summary>
-      /// Gets the animation which is currently playing.
-      /// </summary>
       public Animation Animation
       {
-         get { return animation; }
-      }
-      Animation animation;
+         get
+         {
+            return _Animation;
+         }
+      }Animation _Animation;
 
       /// <summary>
       /// Gets the index of the current frame in the animation.
@@ -38,25 +37,25 @@ namespace YetAnotherDiscSlammer.Common
       private float time;
 
       /// <summary>
-      /// Gets a texture origin at the bottom center of each frame.
+      /// Gets a texture origin at the center of each frame.
       /// </summary>
       public Vector2 Origin
       {
-         get { return new Vector2(Animation.FrameWidth / 2.0f, Animation.FrameHeight / 2.0f); }
+         get { return new Vector2(Animation.SpriteSheet.FrameWidth / 2.0f, Animation.SpriteSheet.FrameHeight / 2.0f); }
       }
 
       /// <summary>
-      /// Begins or continues playback of an animation.
+      /// Sets the playback animation.
       /// </summary>
-      public void PlayAnimation(Animation animation)
+      public void SetAnimation(Animation animation)
       {
          // If this animation is already running, do not restart it.
          if (Animation == animation)
             return;
 
          // Start the new animation.
-         this.animation = animation;
-         this.frameIndex = 0;
+         this._Animation = animation;
+         this.frameIndex = animation.FrameStart;
          this.time = 0.0f;
       }
 
@@ -77,18 +76,18 @@ namespace YetAnotherDiscSlammer.Common
             // Advance the frame index; looping or clamping as appropriate.
             if (Animation.IsLooping)
             {
-               frameIndex = (frameIndex + 1) % Animation.FrameCount;
+               frameIndex = Animation.FrameStart + ((frameIndex + 1 - Animation.FrameStart) % (Animation.FrameCount + 1));
             }
             else
             {
-               frameIndex = Math.Min(frameIndex + 1, Animation.FrameCount - 1);
+               frameIndex = Math.Min(frameIndex + 1, Animation.FrameEnd);
             }
          }
 
-         // Calculate the source rectangle of the current frame.
-         Rectangle source = new Rectangle(FrameIndex * Animation.Texture.Height, 0, Animation.Texture.Height, Animation.Texture.Height);
+         Rectangle source = Animation.SpriteSheet.GetFrame(FrameIndex);
+
          // Draw the current frame.
-         spriteBatch.Draw(Animation.Texture, position, source, Color.White, angle, Origin, 1.0f, SpriteEffects.None, 0.0f);
+         spriteBatch.Draw(Animation.SpriteSheet.Texture, position, source, Color.White, angle, Origin, 1.0f, SpriteEffects.None, 0.0f);
       }
    }
 }

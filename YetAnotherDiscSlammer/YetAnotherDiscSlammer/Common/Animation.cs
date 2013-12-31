@@ -2,83 +2,43 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace YetAnotherDiscSlammer.Common
-{/// <summary>
-   /// Represents an animated texture.
-   /// </summary>
-   /// <remarks>
-   /// Currently, this class assumes that each frame of animation is
-   /// as wide as each animation is tall. The number of frames in the
-   /// animation are inferred from this.
-   /// </remarks>
-   class Animation
+{
+   public class Animation
    {
-      /// <summary>
-      /// All frames in the animation arranged horizontally.
-      /// </summary>
-      public Texture2D Texture
+      public SpriteSheet SpriteSheet
       {
-         get { return texture; }
-      }
-      Texture2D texture;
-
-      /// <summary>
-      /// Duration of time to show each frame.
-      /// </summary>
-      public float FrameTime
+         get { return _SpriteSheet; }
+      }SpriteSheet _SpriteSheet;
+      public int FrameStart
       {
-         get { return frameTime; }
-      }
-      float frameTime;
-
-      /// <summary>
-      /// When the end of the animation is reached, should it
-      /// continue playing from the beginning?
-      /// </summary>
-      public bool IsLooping
+         get { return _FrameStart; }
+      }int _FrameStart;
+      public int FrameEnd
       {
-         get { return isLooping; }
-      }
-      bool isLooping;
-
-      /// <summary>
-      /// Gets the number of frames in the animation.
-      /// </summary>
+         get { return _FrameEnd; }
+      }int _FrameEnd;
       public int FrameCount
       {
-         get { return Texture.Width / FrameWidth; }
+         get { return FrameEnd - FrameStart; }
       }
-
-      /// <summary>
-      /// Gets the width of a frame in the animation.
-      /// </summary>
-      public int FrameWidth
+      public float FrameTime
       {
-         // Assume square frames.
-         get { return Texture.Height; }
-      }
-
-      /// <summary>
-      /// Gets the height of a frame in the animation.
-      /// </summary>
-      public int FrameHeight
+         get { return _FrameTime; }
+      }float _FrameTime;
+      public Boolean IsLooping
       {
-         get { return Texture.Height; }
-      }
+         get { return _IsLooping; }
+      }Boolean _IsLooping;
 
-      /// <summary>
-      /// Constructors a new animation.
-      /// </summary>        
-      public Animation(Texture2D texture, float frameTime, bool isLooping)
+      public Animation(SpriteSheet spriteSheet, float FrameTime, int FrameStart, int FrameEnd, Boolean IsLooping)
       {
-         this.texture = texture;
-         this.frameTime = frameTime;
-         this.isLooping = isLooping;
+         this._SpriteSheet = spriteSheet;
+         this._FrameTime = FrameTime;
+         this._FrameStart = FrameStart;
+         this._FrameEnd = FrameEnd;
+         this._IsLooping = IsLooping;
       }
    }
 }

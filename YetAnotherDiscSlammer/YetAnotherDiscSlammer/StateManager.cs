@@ -119,6 +119,7 @@ namespace YetAnotherDiscSlammer
          _PlayerChoiceMenu = new PlayerChoiceMenu();
          if (_PlayerChoiceMenu.Init(_Content))
          {
+            _PlayerChoiceMenu.LoadContent(_Content);
             _CurrentState = GameStates.PlayerChoice;
          }
       }

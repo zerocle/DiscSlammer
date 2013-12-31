@@ -108,6 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\Animation.cs" />
+    <Compile Include="Common\SpriteSheet.cs" />
     <Compile Include="Common\AnimationPlayer.cs" />
     <Compile Include="Common\FontReader.cs" />
     <Compile Include="Common\RectangleOverlay.cs" />
@@ -122,6 +123,11 @@
     <Compile Include="Helpers\InputState.cs" />
     <Compile Include="Helpers\PhysicsState.cs" />
     <Compile Include="Menu\Character.cs" />
+    <Compile Include="Menu\ChoiceShifter.cs" />
+    <Compile Include="Menu\ChoiceShifterAI.cs" />
+    <Compile Include="Menu\ChoiceShifterGamepad.cs" />
+    <Compile Include="Menu\ChoiceShifterKeyboard.cs" />
+    <Compile Include="Menu\DeviceChooser.cs" />
     <Compile Include="Menu\MenuBase.cs" />
     <Compile Include="Menu\MenuItem.cs" />
     <Compile Include="Menu\PlayerChoiceMenu.cs" />

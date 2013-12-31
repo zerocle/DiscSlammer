@@ -42,7 +42,7 @@ namespace YetAnotherDiscSlammer.Entities
       private const float GroundDragFactor = 0.48f;
       private const float MaxDiveTime = 0.15f; // in seconds
       #endregion
-      #region Animation
+      #region AnimationTexture
       private Animation idleAnimation;
       private Animation moveAnimation;
       private Animation diveAnimation;
@@ -140,15 +140,15 @@ namespace YetAnotherDiscSlammer.Entities
       {
          base.LoadContent(content);
          String characterString = "/" + character.ToString();
-         idleAnimation = new Animation(content.Load<Texture2D>("Sprites" + characterString + "/Idle"), 0.1f, true);
-         moveAnimation = new Animation(content.Load<Texture2D>("Sprites" + characterString + "/move"), 0.1f, true);
-         diveAnimation = new Animation(content.Load<Texture2D>("Sprites" + characterString + "/move"), 0.1f, true);
+         //idleAnimation = new Animation(content.Load<Texture2D>("Sprites" + characterString + "/Idle"));, 0.1f, true, 64);
+         //moveAnimation = new Animation(content.Load<Texture2D>("Sprites" + characterString + "/move"));, 0.1f, true, 64);
+         //diveAnimation = new Animation(content.Load<Texture2D>("Sprites" + characterString + "/move"));
 
          BoundingOverlay = new RectangleOverlay(Color.Red);
          BoundingOverlay.LoadContent(Court.Content.ServiceProvider);
          PlayAreaOverlay = new RectangleOverlay(Color.Orange);
          PlayAreaOverlay.LoadContent(Court.Content.ServiceProvider);
-         sprite.PlayAnimation(idleAnimation);
+         //sprite.PlayAnimation(idleAnimation);
       }
 
       /// <summary>
@@ -232,11 +232,11 @@ namespace YetAnotherDiscSlammer.Entities
          //Check to see if the animation should be the idle or moving
          if (Math.Abs(Velocity.Length()) - 0.02f > 0)
          {
-            sprite.PlayAnimation(moveAnimation);
+            sprite.SetAnimation(moveAnimation);
          }
          else
          {
-            sprite.PlayAnimation(idleAnimation);
+            sprite.SetAnimation(idleAnimation);
          }
       }
 

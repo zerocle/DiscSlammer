@@ -1,0 +1,3 @@
+<player name="Guile" width="48" height="72">
+	<walk frameCount="14" timeBetweenFrame="0.05"/>
+</player>
